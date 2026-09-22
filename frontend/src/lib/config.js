@@ -13,7 +13,14 @@ export const CONFIG = {
     blockExplorerUrls: ['https://scan.botchain.ai/'],
     nativeCurrency: { name: 'BOT', symbol: 'BOT', decimals: 18 }
   },
-  CONTRACT_ADDRESS: '0x0000000000000000000000000000000000000000', // Will be replaced after deployment
+  // ---- EDIT AFTER DEPLOYMENT (Point 2 & 3) ----
+  // 1) Paste the address Remix gives you after deploying PromoVault.sol.
+  //    Use the address from the SAME network you set in NETWORK below.
+  CONTRACT_ADDRESS: '0x0000000000000000000000000000000000000000',
+  // 2) After deploying the backend (Point 5), replace localhost with the live URL,
+  //    e.g. 'https://promovault-api.up.railway.app'. Leave as-is while testing locally.
   API_URL: 'http://localhost:3001',
-  NETWORK: 'TESTNET' // Change to 'MAINNET' for production
+  // 3) Must MATCH the network you deployed the CONTRACT_ADDRESS to.
+  //    'TESTNET' while testing, 'MAINNET' for the final judged submission.
+  NETWORK: 'TESTNET'
 };
