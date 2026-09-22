@@ -38,7 +38,7 @@ Frontend (React + Tailwind)  →  Backend (Node.js + LLM API)
 
 | Network | Chain ID | Contract Address |
 |---|---|---|
-| BOT Chain Testnet | 968 | `<PASTE TESTNET ADDRESS AFTER DEPLOY>` |
+| BOT Chain Testnet | 968 | `0xdc8B6e56E92C4a5ff327F9d21425b76bdb8Bb800` |
 | BOT Chain Mainnet | 677 | `<PASTE MAINNET ADDRESS AFTER DEPLOY>` |
 
 ### Running Locally
