@@ -33,7 +33,7 @@ app.post('/api/generate', async (req, res) => {
          return res.status(500).json({ error: 'Gemini API key is not configured' });
       }
       const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
       const result = await model.generateContent([systemPrompt, userPrompt]);
       generatedText = result.response.text();
     } else if (llmProvider === 'openai') {
