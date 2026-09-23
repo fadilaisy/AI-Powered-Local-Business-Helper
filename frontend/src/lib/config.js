@@ -16,9 +16,8 @@ export const CONFIG = {
   // ---- EDIT AFTER DEPLOYMENT (Point 2 & 3) ----
   // Verified deployed PromoVault contract on BOT Chain Testnet (chainId 968).
   CONTRACT_ADDRESS: '0xdc8B6e56E92C4a5ff327F9d21425b76bdb8Bb800',
-  // 2) After deploying the backend (Point 5), replace localhost with the live URL,
-  //    e.g. 'https://promovault-api.up.railway.app'. Leave as-is while testing locally.
-  API_URL: 'http://localhost:3001',
+  // Live backend deployed on Vercel (production URL).
+  API_URL: 'https://ai-powered-local-business-helper.vercel.app',
   // 3) Must MATCH the network you deployed the CONTRACT_ADDRESS to.
   //    'TESTNET' while testing, 'MAINNET' for the final judged submission.
   NETWORK: 'TESTNET'
