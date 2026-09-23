@@ -69,6 +69,12 @@ app.post('/api/generate', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`PromoVault backend listening on port ${port}`);
-});
+// Run a normal server locally (your machine / Railway / Render).
+// On Vercel (serverless), VERCEL is set, so we skip listen() and export the app instead.
+if (!process.env.VERCEL) {
+  app.listen(port, () => {
+    console.log(`PromoVault backend listening on port ${port}`);
+  });
+}
+
+module.exports = app;
