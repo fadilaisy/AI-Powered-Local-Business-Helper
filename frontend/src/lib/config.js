@@ -13,12 +13,13 @@ export const CONFIG = {
     blockExplorerUrls: ['https://scan.botchain.ai/'],
     nativeCurrency: { name: 'BOT', symbol: 'BOT', decimals: 18 }
   },
-  // ---- EDIT AFTER DEPLOYMENT (Point 2 & 3) ----
-  // Verified deployed PromoVault contract on BOT Chain Testnet (chainId 968).
+  // Verified deployed PromoVault contract on BOT Chain Testnet (chainId 968)
   CONTRACT_ADDRESS: '0xdc8B6e56E92C4a5ff327F9d21425b76bdb8Bb800',
-  // Live backend deployed on Vercel (production URL).
-  API_URL: 'https://ai-powered-local-business-helper.vercel.app',
-  // 3) Must MATCH the network you deployed the CONTRACT_ADDRESS to.
-  //    'TESTNET' while testing, 'MAINNET' for the final judged submission.
+  
+  // Dynamic API URL: In production/Vercel, uses relative path (same domain). In local dev, uses port 3001.
+  API_URL: (typeof window !== 'undefined' && window.location.hostname !== 'localhost')
+    ? ''
+    : 'http://localhost:3001',
+
   NETWORK: 'TESTNET'
 };
