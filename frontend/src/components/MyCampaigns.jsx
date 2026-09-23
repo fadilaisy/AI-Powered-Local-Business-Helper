@@ -27,7 +27,7 @@ function MyCampaigns({ contract, address }) {
         }
         setCampaigns(loaded.reverse());
       } catch (err) {
-        console.error(err);
+        console.error("Error fetching campaigns:", err);
       } finally {
         setLoading(false);
       }
@@ -38,41 +38,104 @@ function MyCampaigns({ contract, address }) {
   const explorerUrl = CONFIG[CONFIG.NETWORK].blockExplorerUrls[0];
 
   if (!address) {
-    return <div className="text-center text-gray-400 py-10">Please connect your wallet to view campaigns.</div>;
+    return (
+      <div className="apple-glass rounded-3xl p-12 text-center space-y-3">
+        <div className="w-12 h-12 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center mx-auto text-white/50 text-xl">
+          🔒
+        </div>
+        <h3 className="text-base font-semibold text-white">Wallet Not Connected</h3>
+        <p className="text-xs text-white/40 max-w-sm mx-auto">
+          Connect your MetaMask wallet above to view your immutable marketing campaigns registered on BOT Chain.
+        </p>
+      </div>
+    );
   }
 
   if (loading) {
-    return <div className="text-center text-bot py-10">Loading campaigns...</div>;
+    return (
+      <div className="grid gap-4 sm:grid-cols-2">
+        {[1, 2].map((n) => (
+          <div key={n} className="apple-glass rounded-3xl p-6 space-y-4 animate-pulse">
+            <div className="h-4 bg-white/10 rounded-full w-24"></div>
+            <div className="h-10 bg-white/5 rounded-xl"></div>
+            <div className="h-3 bg-white/10 rounded-full w-32"></div>
+          </div>
+        ))}
+      </div>
+    );
   }
 
   if (campaigns.length === 0) {
-    return <div className="text-center text-gray-400 py-10">No campaigns yet. Generate your first one!</div>;
+    return (
+      <div className="apple-glass rounded-3xl p-12 text-center space-y-4">
+        <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center mx-auto text-2xl">
+          ✨
+        </div>
+        <div>
+          <h3 className="text-base font-semibold text-white">No Campaigns Anchored Yet</h3>
+          <p className="text-xs text-white/40 max-w-sm mx-auto mt-1">
+            Generate your first campaign copy under the "Generate" tab and anchor it to create proof-of-originality.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      {campaigns.map(camp => (
-        <div key={camp.id} className="bg-gray-800/50 p-5 rounded-xl border border-gray-700">
-          <div className="flex justify-between items-start mb-2">
+    <div className="space-y-4">
+      <div className="flex items-center justify-between px-1">
+        <h2 className="text-xs font-semibold text-white/50 uppercase tracking-wider">
+          Anchored Campaigns ({campaigns.length})
+        </h2>
+        <span className="text-[11px] text-white/40">
+          Immutable On-Chain Records
+        </span>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        {campaigns.map((camp) => (
+          <div
+            key={camp.id}
+            className="apple-glass rounded-3xl p-5 sm:p-6 space-y-4 hover:border-white/[0.15] transition-all duration-200"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-bot/15 text-bot border border-bot/20">
+                  {camp.platform || 'General'}
+                </span>
+                <span className="text-xs text-white/40 font-medium">
+                  {camp.category}
+                </span>
+              </div>
+              <span className="text-[11px] font-mono text-white/30">
+                #{camp.id}
+              </span>
+            </div>
+
             <div>
-              <span className="text-xs font-semibold px-2 py-1 bg-bot/20 text-bot rounded-md">{camp.platform}</span>
-              <span className="text-xs text-gray-400 ml-2">{camp.category}</span>
+              <span className="text-[10px] uppercase font-semibold text-white/40 tracking-wider block mb-1">
+                Content Hash
+              </span>
+              <div className="bg-black/40 border border-white/[0.06] rounded-xl p-2.5 font-mono text-xs text-neutral-300 break-all select-all">
+                {camp.contentHash}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-xs text-white/40 pt-2 border-t border-white/[0.05]">
+              <span>{camp.timestamp}</span>
+              <a
+                href={`${explorerUrl}address/${contract?.target || CONFIG.CONTRACT_ADDRESS}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-bot hover:text-[#00e8ba] font-medium transition inline-flex items-center gap-1"
+              >
+                <span>Contract</span>
+                <span>↗</span>
+              </a>
             </div>
           </div>
-          <div className="text-xs text-gray-500 mb-4">{camp.timestamp}</div>
-          <div className="text-sm font-mono text-gray-300 break-all mb-4 bg-gray-900 p-2 rounded">
-            Hash: {camp.contentHash.slice(0, 16)}...
-          </div>
-          <a
-            href={`${explorerUrl}address/${contract.target}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-bot hover:underline"
-          >
-            Verify Contract ↗
-          </a>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
