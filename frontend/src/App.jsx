@@ -42,7 +42,10 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt, category: categoryKey, platform })
       });
-      if (!res.ok) throw new Error('API Error');
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || `Server returned ${res.status}`);
+      }
       const data = await res.json();
       setGeneratedText(data.text);
       setContentHash(data.contentHash);
@@ -50,7 +53,7 @@ function App() {
       setLastPlatform(platform);
     } catch (err) {
       console.error(err);
-      alert('Failed to generate copy. Ensure the backend server is running.');
+      alert(`Failed to generate copy: ${err.message || 'Please check your connection.'}`);
     } finally {
       setIsGenerating(false);
     }

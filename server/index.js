@@ -53,17 +53,9 @@ app.post('/api/generate', async (req, res) => {
     if (llmProvider === 'gemini' && process.env.GEMINI_API_KEY) {
       try {
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        // Use gemini-2.0-flash with fallback to gemini-1.5-flash
-        let model;
-        try {
-          model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-          const result = await model.generateContent([systemPrompt, userPrompt]);
-          generatedText = result.response.text();
-        } catch (mErr) {
-          model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-          const result = await model.generateContent([systemPrompt, userPrompt]);
-          generatedText = result.response.text();
-        }
+        const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
+        const result = await model.generateContent([systemPrompt, userPrompt]);
+        generatedText = result.response.text();
       } catch (geminiError) {
         console.warn('Gemini API call failed, using graceful fallback:', geminiError.message);
         generatedText = generateFallbackCopy(prompt, category, platform);
