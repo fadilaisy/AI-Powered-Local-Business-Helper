@@ -16,8 +16,9 @@ export const CONFIG = {
   // Verified deployed PromoVault contract on BOT Chain Testnet (chainId 968)
   CONTRACT_ADDRESS: '0xdc8B6e56E92C4a5ff327F9d21425b76bdb8Bb800',
   
-  // Live backend URL on Vercel. Points to the live serverless backend so local and remote testing both work out-of-the-box.
-  API_URL: import.meta.env.VITE_API_URL || (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app') ? '' : 'https://ai-powered-local-business-helper.vercel.app'),
+  // API URL: Defaults to relative '' so it always hits the current domain (/api/generate).
+  // Can be overridden with VITE_API_URL if needed.
+  API_URL: import.meta.env.VITE_API_URL || '',
 
   NETWORK: 'TESTNET'
 };
