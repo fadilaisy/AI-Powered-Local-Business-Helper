@@ -1,4 +1,4 @@
-import { Contract } from 'ethers';
+import { BrowserProvider, Contract, JsonRpcProvider } from 'ethers';
 import { CONFIG } from './config';
 
 export const ABI = [
@@ -11,6 +11,29 @@ export const ABI = [
   "event CampaignRegistered(uint256 indexed campaignId, address indexed business, bytes32 contentHash, string category, uint256 timestamp)"
 ];
 
+function requireContractAddress() {
+  if (!CONFIG.contractAddress) throw new Error('No contract address configured for the active network');
+  return CONFIG.contractAddress;
+}
+
+export function getReadProvider() {
+  return new JsonRpcProvider(CONFIG.rpcUrls[0], Number.parseInt(CONFIG.chainId, 16));
+}
+
+export function getReadContract() {
+  return new Contract(requireContractAddress(), ABI, getReadProvider());
+}
+
 export function getContract(signer) {
-  return new Contract(CONFIG.CONTRACT_ADDRESS, ABI, signer);
+  return new Contract(requireContractAddress(), ABI, signer);
+}
+
+export function getBrowserProvider() {
+  return new BrowserProvider(window.ethereum);
+}
+
+export async function verifyActiveContract(provider) {
+  if (!CONFIG.contractAddress) return false;
+  const code = await provider.getCode(CONFIG.contractAddress);
+  return code !== '0x';
 }

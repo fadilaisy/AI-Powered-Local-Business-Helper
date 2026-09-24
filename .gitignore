@@ -1,28 +1,22 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
 # Dependencies
 node_modules/
-.pnp
-.pnp.js
 
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Production build outputs
+# Build output
+frontend/dist/
 dist/
-dist-ssr/
 build/
+coverage/
 
 # Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
+*.log
 
-# Editor and OS files
+# Local tool state
+.DS_Store
 .vscode/
 .idea/
-.DS_Store
-Thumbs.db
+.commandcode/context.md

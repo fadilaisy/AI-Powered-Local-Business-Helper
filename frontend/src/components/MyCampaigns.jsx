@@ -4,6 +4,7 @@ import { CONFIG } from '../lib/config';
 function MyCampaigns({ contract, address }) {
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     async function fetchCampaigns() {
@@ -11,6 +12,8 @@ function MyCampaigns({ contract, address }) {
         setLoading(false);
         return;
       }
+      setLoading(true);
+      setError('');
       try {
         const ids = await contract.getMyCampaignIds();
         const loaded = [];
@@ -27,7 +30,7 @@ function MyCampaigns({ contract, address }) {
         }
         setCampaigns(loaded.reverse());
       } catch (err) {
-        console.error("Error fetching campaigns:", err);
+        setError('Could not read campaigns from BOT Chain. Check the RPC connection and try again.');
       } finally {
         setLoading(false);
       }
@@ -35,7 +38,7 @@ function MyCampaigns({ contract, address }) {
     fetchCampaigns();
   }, [contract, address]);
 
-  const explorerUrl = CONFIG[CONFIG.NETWORK].blockExplorerUrls[0];
+  const explorerUrl = CONFIG.blockExplorerUrls[0];
 
   if (!address) {
     return (
@@ -61,6 +64,15 @@ function MyCampaigns({ contract, address }) {
             <div className="h-3 bg-white/10 rounded-full w-32"></div>
           </div>
         ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div role="alert" className="apple-glass rounded-3xl p-12 text-center space-y-3">
+        <h3 className="text-base font-semibold text-red-300">Vault unavailable</h3>
+        <p className="text-xs text-white/50 max-w-sm mx-auto">{error}</p>
       </div>
     );
   }
@@ -124,7 +136,7 @@ function MyCampaigns({ contract, address }) {
             <div className="flex items-center justify-between text-xs text-white/40 pt-2 border-t border-white/[0.05]">
               <span>{camp.timestamp}</span>
               <a
-                href={`${explorerUrl}address/${contract?.target || CONFIG.CONTRACT_ADDRESS}`}
+                href={`${explorerUrl}address/${contract?.target || CONFIG.contractAddress}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-bot hover:text-[#00e8ba] font-medium transition inline-flex items-center gap-1"

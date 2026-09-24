@@ -1,4 +1,5 @@
 import React from 'react';
+import { CONFIG } from '../lib/config';
 
 function Footer() {
   return (
@@ -30,7 +31,7 @@ function Footer() {
           </a>
           <span className="text-white/20">|</span>
           <a
-            href="https://scan.botchain.ai"
+            href={CONFIG.blockExplorerUrls[0]}
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-bot transition-colors flex items-center gap-1"

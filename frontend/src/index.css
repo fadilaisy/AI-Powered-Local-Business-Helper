@@ -17,7 +17,21 @@
   }
 }
 
-/* Apple-style translucent glass card utility */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 220ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+
 .apple-glass {
   background: rgba(255, 255, 255, 0.035);
   backdrop-filter: blur(30px);

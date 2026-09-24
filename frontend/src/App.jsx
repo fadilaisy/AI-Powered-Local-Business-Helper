@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ConnectWallet from './components/ConnectWallet';
 import PromptForm from './components/PromptForm';
 import GeneratedCopy from './components/GeneratedCopy';
@@ -22,6 +22,24 @@ function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAnchoring, setIsAnchoring] = useState(false);
   const [txHash, setTxHash] = useState(null);
+  const [generationSource, setGenerationSource] = useState('ai');
+
+  useEffect(() => {
+    const stored = localStorage.getItem('promovault.generated');
+    if (stored) {
+      try {
+        const campaign = JSON.parse(stored);
+        setGeneratedText(campaign.text);
+        setContentHash(campaign.contentHash);
+        setLastCategory(campaign.category || 'general');
+        setLastPlatform(campaign.platform || 'instagram');
+        setTxHash(campaign.txHash || null);
+        setGenerationSource(campaign.source || 'fallback');
+      } catch {
+        localStorage.removeItem('promovault.generated');
+      }
+    }
+  }, []);
 
   const handleWalletConnect = (addr, sig, prov) => {
     setAddress(addr);
@@ -30,30 +48,50 @@ function App() {
     setContract(getContract(sig));
   };
 
+  const handleWalletDisconnect = () => {
+    setAddress(null);
+    setSigner(null);
+    setProvider(null);
+    setContract(null);
+  };
+
+  const saveGeneratedCampaign = (campaign) => {
+    localStorage.setItem('promovault.generated', JSON.stringify(campaign));
+  };
+
   const handleGenerate = async ({ prompt, category, platform }) => {
     setIsGenerating(true);
     setGeneratedText(null);
     setContentHash(null);
     setTxHash(null);
     try {
-      const categoryKey = category.toLowerCase().replace('/', '_').replace(/ /g, '_');
-      const res = await fetch(`${CONFIG.API_URL}/api/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, category: categoryKey, platform })
-      });
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.error || `Server returned ${res.status}`);
+      const businessCategory = category.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+      try {
+        const res = await fetch(`${CONFIG.API_URL}/api/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({ prompt, businessCategory, platform })
+        });
+        if (!res.ok) {
+          const errJson = await res.json().catch(() => ({}));
+          throw new Error(errJson.error?.message || errJson.error || `Server returned ${res.status}`);
+        }
+        const data = await res.json();
+        setGeneratedText(data.text);
+        setContentHash(data.contentHash);
+        setLastCategory(businessCategory);
+        setLastPlatform(data.platform || platform);
+        setGenerationSource(data.source || 'fallback');
+        saveGeneratedCampaign({ text: data.text, contentHash: data.contentHash, category: businessCategory, platform: data.platform || platform, source: data.source || 'fallback' });
+      } finally {
+        clearTimeout(timeout);
       }
-      const data = await res.json();
-      setGeneratedText(data.text);
-      setContentHash(data.contentHash);
-      setLastCategory(category);
-      setLastPlatform(platform);
     } catch (err) {
-      console.error(err);
-      alert(`Failed to generate copy: ${err.message || 'Please check your connection.'}`);
+      const message = err.name === 'AbortError' ? 'The request took too long. Please try again.' : err.message || 'Please check your connection.';
+      alert(`Failed to generate copy: ${message}`);
     } finally {
       setIsGenerating(false);
     }
@@ -67,9 +105,15 @@ function App() {
     setIsAnchoring(true);
     setTxHash(null);
     try {
+      const [exists] = await contract.verifyCampaign(contentHash);
+      if (exists) {
+        alert('This exact campaign hash is already registered on BOT Chain.');
+        return;
+      }
       const tx = await contract.registerCampaign(contentHash, lastCategory, lastPlatform);
       await tx.wait();
       setTxHash(tx.hash);
+      saveGeneratedCampaign({ text: generatedText, contentHash, category: lastCategory, platform: lastPlatform, source: generationSource, txHash: tx.hash });
     } catch (err) {
       console.error(err);
       alert('Failed to anchor on chain. Check your BOT balance or network.');
@@ -104,7 +148,7 @@ function App() {
             </div>
           </div>
 
-          <ConnectWallet onConnect={handleWalletConnect} address={address} />
+           <ConnectWallet onConnect={handleWalletConnect} onDisconnect={handleWalletDisconnect} address={address} />
         </div>
       </header>
 
@@ -166,6 +210,7 @@ function App() {
                   onAnchor={handleAnchor}
                   isAnchoring={isAnchoring}
                   txHash={txHash}
+                  source={generationSource}
                 />
               )}
             </div>
@@ -179,7 +224,7 @@ function App() {
 
           {activeTab === 'Verify' && (
             <div className="animate-fadeIn">
-              <VerifyCampaign contract={contract} />
+              <VerifyCampaign />
             </div>
           )}
         </section>

@@ -39,16 +39,17 @@ function PromptForm({ onGenerate, isLoading }) {
         
         {/* Platform Segmented Control */}
         <div>
-          <label className="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-2.5">
+          <label className="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-2.5" id="platform-label">
             Target Platform
           </label>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-black/40 p-1.5 rounded-2xl border border-white/[0.06]">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-black/40 p-1.5 rounded-2xl border border-white/[0.06]" role="group" aria-labelledby="platform-label">
             {PLATFORMS.map((p) => {
               const active = platform === p.id;
               return (
                 <button
                   type="button"
                   key={p.id}
+                  aria-pressed={active}
                   onClick={() => setPlatform(p.id)}
                   className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-medium transition-all duration-150 active:scale-[0.98] ${
                     active
@@ -67,7 +68,7 @@ function PromptForm({ onGenerate, isLoading }) {
         {/* Prompt Input */}
         <div>
           <div className="flex justify-between items-center mb-2">
-            <label className="text-xs font-semibold text-white/50 uppercase tracking-wider">
+            <label className="text-xs font-semibold text-white/50 uppercase tracking-wider" htmlFor="campaign-prompt">
               Marketing Campaign Brief
             </label>
             <span className="text-[11px] text-white/30 font-mono">
@@ -77,7 +78,9 @@ function PromptForm({ onGenerate, isLoading }) {
           
           <div className="relative rounded-2xl bg-black/40 border border-white/[0.08] focus-within:border-bot/60 focus-within:ring-2 focus-within:ring-bot/10 transition-all duration-200">
             <textarea
-              className="w-full bg-transparent p-4 text-sm text-white placeholder-white/25 focus:outline-none resize-none h-32 leading-relaxed"
+               id="campaign-prompt"
+               maxLength={4000}
+               className="w-full bg-transparent p-4 text-sm text-white placeholder-white/25 focus:outline-none resize-none h-32 leading-relaxed"
               placeholder="Describe your promotion, discount, event, or brand story..."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
@@ -105,11 +108,12 @@ function PromptForm({ onGenerate, isLoading }) {
         {/* Category & Action Bar */}
         <div className="flex flex-col sm:flex-row gap-4 items-center">
           <div className="w-full sm:w-1/2">
-            <label className="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-2" htmlFor="business-category">
               Business Category
             </label>
             <div className="relative">
               <select
+                id="business-category"
                 className="w-full appearance-none bg-black/40 border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-xs text-white/90 focus:outline-none focus:border-bot/60 focus:ring-1 focus:ring-bot/20 pr-8 cursor-pointer transition-colors"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}

@@ -36,6 +36,9 @@ contract PromoVault {
         string memory platform
     ) public returns (uint256) {
         require(hashToCampaign[contentHash] == 0, "Content already registered");
+        require(bytes(category).length <= 80, "Category too long");
+        require(bytes(platform).length <= 40, "Platform too long");
+        require(businessCampaigns[msg.sender].length < 1000, "Campaign limit reached");
 
         campaignCount++;
         campaigns[campaignCount] = Campaign(

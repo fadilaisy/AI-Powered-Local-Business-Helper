@@ -1,82 +1,82 @@
-# PromoVault — AI Marketing Copy with On-Chain Proof of Originality
+# PromoVault — AI marketing copy with a public on-chain hash timestamp
 
-PromoVault lets small businesses generate platform-ready marketing copy in seconds and anchor every campaign on BOT Chain, creating a verifiable, timestamped proof they created the content first.
+PromoVault helps small businesses generate platform-ready marketing copy and optionally anchor its SHA-256 hash on BOT Chain.
 
-## How It Works
+The blockchain record proves that a hash was first submitted by an address at a recorded time. It does not prove authorship, business identity, or that AI generated the text. Verify the exact bytes you intended to anchor; any change creates a different hash.
 
-1. **Connect your wallet** — MetaMask on BOT Chain
-2. **Type a prompt** — e.g., "Write an Instagram caption for a 20% off weekend coffee sale"
-3. **Pick a platform** — Instagram, Twitter/X, Flyer, Google Business
-4. **Generate** — AI creates tailored marketing copy
-5. **Anchor on BOT Chain** — SHA-256 hash of the content is stored on-chain
-6. **Verify anytime** — Paste any text to check if it was registered first
+## How it works
 
-## Why Blockchain?
-
-Without the on-chain hash, this is just another ChatGPT wrapper. With it, businesses hold cryptographic proof of when they created their marketing content — useful for IP disputes, brand audits, and franchise compliance.
+1. Generate copy with a prompt, target platform, and business category.
+2. Review whether the result came from the configured LLM or the explicit template fallback.
+3. Connect a wallet only when anchoring; verification uses a public RPC and does not require a wallet.
+4. Anchor the exact generated text hash to the configured BOT Chain contract.
+5. Verify exact text or paste a 32-byte hash later.
 
 ## Architecture
 
 ```
-Frontend (React + Tailwind)  →  Backend (Node.js + LLM API)
-        ↕                              ↓
-  MetaMask / ethers.js          Returns text + SHA-256 hash
-        ↕
-  PromoVault.sol on BOT Chain
+React/Vite frontend -> Express or Vercel /api/generate -> configured LLM or template fallback
+       |                                      |
+       |                                      +-- canonical SHA-256 hash
+       +-- MetaMask/ethers -> PromoVault.sol on BOT Chain
 ```
 
-## Tech Stack
+## Local development
 
-- **Frontend**: React 18, Vite, Tailwind CSS, ethers.js v6
-- **Backend**: Node.js, Express, Google Gemini / OpenAI
-- **Smart Contract**: Solidity 0.8.20, deployed via Remix IDE
-- **Chain**: BOT Chain (EVM-compatible)
+Backend:
 
-## Deployment
-
-### Smart Contract Addresses
-
-| Network | Chain ID | Contract Address |
-|---|---|---|
-| BOT Chain Testnet | 968 | `0xdc8B6e56E92C4a5ff327F9d21425b76bdb8Bb800` |
-| BOT Chain Mainnet | 677 | `<PASTE MAINNET ADDRESS AFTER DEPLOY>` |
-
-### Running Locally
-
-**Backend:**
 ```bash
 cd server
 cp .env.example .env
-# Add your LLM API key to .env
+# Add GEMINI_API_KEY or OPENAI_API_KEY
 npm install
 npm run dev
 ```
 
-**Frontend:**
+Frontend:
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-Open `http://localhost:5173` in your browser.
+The Vite development server proxies `/api` to `http://localhost:3001`; do not set `VITE_API_URL` for the normal local setup.
 
-## Smart Contract
+## Environment variables
 
-The `PromoVault.sol` contract provides:
+Backend variables are documented in `server/.env.example`:
 
-- `registerCampaign(contentHash, category, platform)` — Store a content hash on-chain
-- `verifyCampaign(contentHash)` — Check if content was registered and by whom
-- `getCampaign(id)` — Get full campaign details
-- `getMyCampaignIds()` — List all campaigns for the connected wallet
+- `LLM_PROVIDER`: `gemini` or `openai`
+- `GEMINI_API_KEY` / `OPENAI_API_KEY`: provider credentials
+- `GEMINI_MODEL` / `OPENAI_MODEL`: optional model overrides
+- `ALLOWED_ORIGINS`: comma-separated production origins; omit locally
+- `PORT`: local server port, default `3001`
 
-## Links
+Frontend variables:
 
-- **Live Site**: TBD
-- **Block Explorer**: [scan.botchain.ai](https://scan.botchain.ai)
-- **BOT Chain**: [botchain.ai](https://botchain.ai)
+- `VITE_API_URL`: optional absolute API URL for a separately hosted backend
+- `VITE_BOT_NETWORK`: `TESTNET` (default) or `MAINNET`
+- `VITE_MAINNET_CONTRACT_ADDRESS`: required when selecting mainnet
 
-## License
---deploy--
+## Contract addresses
 
-MIT
+| Network | Chain ID | Contract |
+|---|---:|---|
+| BOT Chain Testnet | 968 | `0xdc8B6e56E92C4a5ff327F9d21425b76bdb8Bb800` |
+| BOT Chain Mainnet | 677 | Configure before enabling |
+
+The default deployment is testnet. Testnet records are not production evidence.
+
+## Validation
+
+```bash
+npm test
+npm run build
+```
+
+The root build uses the frontend lockfile. Vercel serves the built SPA and the `api/` serverless functions from the repository root.
+
+## Legal and data notices
+
+Generated briefs are sent to the configured third-party LLM provider when AI generation is available. Template fallback mode does not send the brief to an LLM. On-chain records contain hashes and campaign metadata, not the source copy. Review the provider's data policy and applicable advertising, intellectual-property, privacy, and consumer-protection rules before commercial use.

@@ -1,23 +1,27 @@
-export const CONFIG = {
+export const ACTIVE_NETWORK = import.meta.env.VITE_BOT_NETWORK || 'TESTNET';
+const network = ACTIVE_NETWORK.toUpperCase() === 'MAINNET' ? 'MAINNET' : 'TESTNET';
+
+const NETWORK_CONFIG = {
   TESTNET: {
     chainId: '0x3C8', // 968
     chainName: 'BOT Chain Testnet',
     rpcUrls: ['https://rpc.bohr.life'],
     blockExplorerUrls: ['https://scan.bohr.life/'],
-    nativeCurrency: { name: 'BOT', symbol: 'BOT', decimals: 18 }
+    nativeCurrency: { name: 'BOT', symbol: 'BOT', decimals: 18 },
+    contractAddress: '0xdc8B6e56E92C4a5ff327F9d21425b76bdb8Bb800'
   },
   MAINNET: {
     chainId: '0x2A5', // 677
     chainName: 'BOT Chain Mainnet',
     rpcUrls: ['https://rpc.botchain.ai'],
     blockExplorerUrls: ['https://scan.botchain.ai/'],
-    nativeCurrency: { name: 'BOT', symbol: 'BOT', decimals: 18 }
-  },
-  // Verified deployed PromoVault contract on BOT Chain Testnet (chainId 968)
-  CONTRACT_ADDRESS: '0xdc8B6e56E92C4a5ff327F9d21425b76bdb8Bb800',
-  
-  // Live backend API URL on Vercel
-  API_URL: import.meta.env.VITE_API_URL || 'https://ai-powered-local-business-helper.vercel.app',
+    nativeCurrency: { name: 'BOT', symbol: 'BOT', decimals: 18 },
+    contractAddress: import.meta.env.VITE_MAINNET_CONTRACT_ADDRESS || ''
+  }
+};
 
-  NETWORK: 'TESTNET'
+export const CONFIG = {
+  ...NETWORK_CONFIG[network],
+  NETWORK: network,
+  API_URL: import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : 'https://ai-powered-local-business-helper.vercel.app')
 };
