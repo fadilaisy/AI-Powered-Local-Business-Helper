@@ -100,6 +100,25 @@ app.post('/api/generate', async (req, res) => {
   }
 });
 
+const path = require('path');
+const fs = require('fs');
+
+const distPath = path.join(__dirname, '../frontend/dist');
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+}
+
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    return next();
+  }
+  const indexHtml = path.join(__dirname, '../frontend/dist/index.html');
+  if (fs.existsSync(indexHtml)) {
+    return res.sendFile(indexHtml);
+  }
+  next();
+});
+
 // Run a normal server locally (your machine / Railway / Render).
 // On Vercel (serverless), VERCEL is set, so we skip listen() and export the app instead.
 if (!process.env.VERCEL) {
