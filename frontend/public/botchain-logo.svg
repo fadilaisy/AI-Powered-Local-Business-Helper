@@ -1,15 +1,9 @@
 <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="BOT Chain">
-  <defs>
-    <linearGradient id="botGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#00D4AA"/>
-      <stop offset="1" stop-color="#00A382"/>
-    </linearGradient>
-  </defs>
-  <rect width="64" height="64" rx="16" fill="url(#botGrad)"/>
-  <!-- interlocking chain links to signal 'chain' -->
-  <g stroke="#04231C" stroke-width="4.5" fill="none" stroke-linecap="round">
-    <rect x="16" y="24" width="20" height="16" rx="8"/>
-    <rect x="28" y="24" width="20" height="16" rx="8"/>
+  <rect width="64" height="64" rx="14" fill="#000000"/>
+  <!-- Stylized 'B' mark: two offset parallelogram lobes, BOT Chain green -->
+  <g fill="#00D4AA">
+    <path d="M22 14 H40 L30 27 H22 Z"/>
+    <path d="M22 30 H42 L31 44 H22 Z"/>
+    <path d="M22 47 H38 L29 59 H22 Z"/>
   </g>
-  <circle cx="32" cy="32" r="3.2" fill="#04231C"/>
 </svg>

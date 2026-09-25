@@ -136,7 +136,7 @@ function App() {
       <header className="sticky top-0 z-50 w-full backdrop-blur-2xl bg-black/60 border-b border-white/[0.08] px-4 py-3.5">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-bot to-[#00A382] flex items-center justify-center shadow-lg shadow-bot/20 overflow-hidden">
+            <div className="w-8 h-8 rounded-xl bg-black flex items-center justify-center shadow-lg shadow-bot/20 overflow-hidden border border-white/10">
               <img src="/botchain-logo.svg" alt="BOT Chain" className="w-8 h-8" />
             </div>
             <div>
