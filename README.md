@@ -124,6 +124,24 @@ Frontend variables:
 
 The application supports both networks seamlessly with an in-app network switcher in the header. The default active network is **BOT Chain Mainnet**.
 
+## Deployment
+
+Vercel serves the built SPA and the `api/` serverless functions from the
+repository root, driven by the single root `vercel.json`. The former
+`frontend/vercel.json` and `server/vercel.json` were removed: both rewrote every
+route (`/(.*)`), so deploying from a subdirectory would have shadowed the root
+config and broken routing. Only the root `vercel.json` is authoritative.
+
+Required project environment variables:
+
+- `GEMINI_API_KEY` (or `OPENAI_API_KEY` with `LLM_PROVIDER=openai`)
+- `ALLOWED_ORIGINS`: comma-separated origins allowed to call the API
+- `VITE_MAINNET_CONTRACT_ADDRESS` / `VITE_TESTNET_CONTRACT_ADDRESS` when using
+  the built-in addresses
+
+Verify a deployment with `GET /api/health`: it returns `200` when a provider key
+is configured and `503` with `providerConfigured: false` when it is not.
+
 ## Validation
 
 ```bash
@@ -131,7 +149,11 @@ npm test
 npm run build
 ```
 
-The root build uses the frontend lockfile. Vercel serves the built SPA and the `api/` serverless functions from the repository root.
+The test suite is hermetic: it clears provider credentials before loading the
+module under test, so it never makes network calls and does not depend on the
+variables a developer machine or CI runner happens to export. CI additionally
+asserts that each `api/` entry point exports a callable handler, since a broken
+export would otherwise only fail at request time.
 
 ## Legal and data notices
 

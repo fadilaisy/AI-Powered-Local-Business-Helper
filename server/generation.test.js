@@ -1,5 +1,15 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+
+// These tests must never reach a provider. Clear the keys and force an
+// unsupported provider so callProvider() short-circuits before any network call.
+// Without this, a developer machine or CI runner that happens to export
+// GEMINI_API_KEY turns the suite into live API calls against a real quota, and
+// assertions about the fallback path depend on that ambient environment.
+delete process.env.GEMINI_API_KEY;
+delete process.env.OPENAI_API_KEY;
+delete process.env.LLM_PROVIDER;
+
 const {
   MAX_PROMPT_LENGTH,
   classifyProviderFailure,
@@ -8,6 +18,7 @@ const {
   hashContent,
   isRetryable,
   normalizePlatform,
+  providerSettings,
   validateRequest
 } = require('./generation');
 const {
@@ -44,10 +55,35 @@ test('returns deterministic fallback copy and canonical hash', async () => {
   assert.equal(second.body.contentHash, first.body.contentHash);
 });
 
-test('health reports degraded when provider is not configured', () => {
+test('health reports degraded when the provider is not configured', () => {
+  // Env is cleared above, so this is a deterministic assertion rather than a
+  // reflection of whatever the host machine happens to export.
   const snapshot = healthSnapshot();
-  assert.ok(['ok', 'degraded'].includes(snapshot.status));
-  assert.equal(snapshot.providerConfigured, Boolean(process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY));
+  assert.equal(snapshot.status, 'degraded');
+  assert.equal(snapshot.providerConfigured, false);
+  assert.equal(snapshot.model, 'gemini-3.6-flash');
+  assert.ok(Date.parse(snapshot.time));
+});
+
+test('an unsupported provider is rejected loudly instead of silently falling back', () => {
+  process.env.LLM_PROVIDER = 'anthropic';
+  assert.throws(() => providerSettings(), /Unsupported LLM_PROVIDER/);
+  delete process.env.LLM_PROVIDER;
+});
+
+test('the model override is honoured for the active provider only', () => {
+  process.env.GEMINI_MODEL = 'gemini-3.5-flash';
+  assert.equal(providerSettings().model, 'gemini-3.5-flash');
+  delete process.env.GEMINI_MODEL;
+
+  // A Gemini model must not be consulted while OpenAI is the active provider.
+  process.env.LLM_PROVIDER = 'openai';
+  process.env.OPENAI_MODEL = 'gpt-4o-mini';
+  process.env.GEMINI_MODEL = 'gemini-3.5-flash';
+  assert.equal(providerSettings().model, 'gpt-4o-mini');
+  delete process.env.LLM_PROVIDER;
+  delete process.env.OPENAI_MODEL;
+  delete process.env.GEMINI_MODEL;
 });
 
 test('a missing platform falls back to general instead of erroring', () => {
