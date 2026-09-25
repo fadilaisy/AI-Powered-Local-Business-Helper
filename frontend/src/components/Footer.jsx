@@ -1,50 +1,33 @@
 import React from 'react';
+import BotChainLogo from './BotChainLogo';
 import { CONFIG } from '../lib/config';
 
 function Footer() {
   return (
-    <footer className="w-full border-t border-white/[0.06] mt-20 py-10 bg-black/60 backdrop-blur-xl">
-      <div className="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-white/40">
-        
-        {/* Brand & Purpose */}
+    <footer className="app-footer">
+      <div className="app-footer-inner">
         <div className="flex items-center gap-3">
-          <div className="w-6 h-6 rounded-lg bg-bot/20 border border-bot/30 flex items-center justify-center text-bot font-bold text-xs">
-            P
-          </div>
-          <div>
-            <span className="font-semibold text-white/80">PromoVault</span>
-            <span className="mx-2">·</span>
-            <span>Proof of Originality for Local Business AI Marketing</span>
-          </div>
-        </div>
-
-        {/* Mandatory Hackathon BOT Chain Links */}
-        <div className="flex items-center gap-4">
-          <a
-            href="https://botchain.ai"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-bot transition-colors flex items-center gap-1"
-          >
-            <span>BOT Chain</span>
-            <span className="text-[10px]">↗</span>
-          </a>
-          <span className="text-white/20">|</span>
-          <a
-            href={CONFIG.blockExplorerUrls[0]}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-bot transition-colors flex items-center gap-1"
-          >
-            <span>BOT Explorer</span>
-            <span className="text-[10px]">↗</span>
-          </a>
-          <span className="text-white/20">|</span>
-          <span className="px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/[0.06] text-[10px] text-white/60">
-            Build Week Vol.2
+          <span className="grid h-9 w-9 place-items-center rounded-[10px] border-2 border-[#11110f] bg-[#ffdc35]">
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
+              <path d="M12 2l1.55 6.45L20 10l-6.45 1.55L12 18l-1.55-6.45L4 10l6.45-1.55L12 2z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+            </svg>
           </span>
+          <div>
+            <p className="text-[14px] font-extrabold tracking-[-0.03em]">PromoVault</p>
+            <p className="text-[12px] text-[#6d6a62]">AI copy with an exact-text public record.</p>
+          </div>
         </div>
 
+        <div className="flex flex-wrap items-center gap-3 text-[12px] font-bold">
+          <a className="inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-[#11110f] bg-white px-4 transition hover:-translate-y-0.5 hover:bg-[#f1f0eb] hover:shadow-[3px_3px_0_#11110f]" href="https://botchain.ai" target="_blank" rel="noopener noreferrer">
+            <BotChainLogo className="h-5 w-5" />
+            Built on BOT Chain
+          </a>
+          <a className="rounded-full border-2 border-[#11110f] bg-white px-4 py-2.5 transition hover:-translate-y-0.5 hover:bg-[#f1f0eb] hover:shadow-[3px_3px_0_#11110f]" href={CONFIG.blockExplorerUrls[0]} target="_blank" rel="noopener noreferrer">
+            BOT Explorer
+          </a>
+          <span className="rounded-full border border-[#aaa79e] px-3 py-2 text-[#5f5d57]">Build Week Vol. 2</span>
+        </div>
       </div>
     </footer>
   );

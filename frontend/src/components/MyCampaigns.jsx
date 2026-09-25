@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { CONFIG } from '../lib/config';
+import BotChainLogo from './BotChainLogo';
 
 function MyCampaigns({ contract, address }) {
   const [campaigns, setCampaigns] = useState([]);
@@ -18,18 +19,18 @@ function MyCampaigns({ contract, address }) {
         const ids = await contract.getMyCampaignIds();
         const loaded = [];
         for (const id of ids) {
-          const camp = await contract.getCampaign(id);
+          const campaign = await contract.getCampaign(id);
           loaded.push({
             id: id.toString(),
-            owner: camp[0],
-            contentHash: camp[1],
-            category: camp[2],
-            platform: camp[3],
-            timestamp: new Date(Number(camp[4]) * 1000).toLocaleString()
+            owner: campaign[0],
+            contentHash: campaign[1],
+            category: campaign[2],
+            platform: campaign[3],
+            timestamp: new Date(Number(campaign[4]) * 1000).toLocaleString()
           });
         }
         setCampaigns(loaded.reverse());
-      } catch (err) {
+      } catch (readError) {
         setError('Could not read campaigns from BOT Chain. Check the RPC connection and try again.');
       } finally {
         setLoading(false);
@@ -42,110 +43,68 @@ function MyCampaigns({ contract, address }) {
 
   if (!address) {
     return (
-      <div className="apple-glass rounded-3xl p-12 text-center space-y-3">
-        <div className="w-12 h-12 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center mx-auto text-white/50 text-xl">
-          🔒
+      <section className="workspace-card flex min-h-[470px] flex-col items-center justify-center overflow-hidden p-8 text-center sm:p-12">
+        <div className="relative mb-6 grid h-24 w-24 place-items-center rounded-[20px] border-2 border-[#11110f] bg-[#ffdc35] shadow-[5px_5px_0_#11110f]">
+          <svg viewBox="0 0 24 24" className="h-11 w-11" fill="none" aria-hidden="true"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5v-9Z" stroke="currentColor" strokeWidth="1.8" /><path d="M4 8h14.5A1.5 1.5 0 0 1 20 9.5v4H17a2 2 0 0 1 0-4h3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /><circle cx="16.5" cy="11.5" r=".7" fill="currentColor" /></svg>
+          <span className="absolute -right-3 -top-3 grid h-8 w-8 place-items-center rounded-full border-2 border-[#11110f] bg-[#3157d5] text-[10px] font-black text-white">01</span>
         </div>
-        <h3 className="text-base font-semibold text-white">Wallet Not Connected</h3>
-        <p className="text-xs text-white/40 max-w-sm mx-auto">
-          Connect your MetaMask wallet above to view your immutable marketing campaigns registered on BOT Chain.
-        </p>
-      </div>
+        <h2 className="workspace-heading max-w-md">Connect the wallet that owns your records.</h2>
+        <p className="workspace-copy mt-3 max-w-md">Your vault is read from BOT Chain using your connected address. Nothing is uploaded here; we only read the campaigns that address has anchored.</p>
+        <span className="status-pill mt-7 bg-[#f1f0eb]"><span className="h-2 w-2 rounded-full bg-[#ffdc35] border border-[#11110f]" /> No wallet required for public verification</span>
+      </section>
     );
   }
 
   if (loading) {
     return (
       <div className="grid gap-4 sm:grid-cols-2">
-        {[1, 2].map((n) => (
-          <div key={n} className="apple-glass rounded-3xl p-6 space-y-4 animate-pulse">
-            <div className="h-4 bg-white/10 rounded-full w-24"></div>
-            <div className="h-10 bg-white/5 rounded-xl"></div>
-            <div className="h-3 bg-white/10 rounded-full w-32"></div>
-          </div>
-        ))}
+        {[1, 2].map((item) => <div key={item} className="workspace-card animate-pulse p-6"><div className="h-5 w-28 rounded-full bg-[#e4e2da]" /><div className="mt-8 h-20 rounded-[12px] bg-[#efede7]" /><div className="mt-6 h-4 w-36 rounded-full bg-[#e4e2da]" /></div>)}
       </div>
     );
   }
 
   if (error) {
     return (
-      <div role="alert" className="apple-glass rounded-3xl p-12 text-center space-y-3">
-        <h3 className="text-base font-semibold text-red-300">Vault unavailable</h3>
-        <p className="text-xs text-white/50 max-w-sm mx-auto">{error}</p>
-      </div>
+      <section role="alert" className="workspace-card p-8 text-center sm:p-12">
+        <h2 className="text-xl font-extrabold text-[#8e2e28]">We couldn’t read your vault.</h2>
+        <p className="workspace-copy mx-auto mt-3 max-w-md">{error}</p>
+      </section>
     );
   }
 
   if (campaigns.length === 0) {
     return (
-      <div className="apple-glass rounded-3xl p-12 text-center space-y-4">
-        <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center mx-auto text-2xl">
-          ✨
-        </div>
-        <div>
-          <h3 className="text-base font-semibold text-white">No Campaigns Anchored Yet</h3>
-          <p className="text-xs text-white/40 max-w-sm mx-auto mt-1">
-            Generate your first campaign copy under the "Generate" tab and anchor it to create proof-of-originality.
-          </p>
-        </div>
-      </div>
+      <section className="workspace-card flex min-h-[470px] flex-col items-center justify-center overflow-hidden p-8 text-center sm:p-12">
+        <div className="mb-6 grid h-24 w-24 place-items-center rounded-[20px] border-2 border-[#11110f] bg-[#ffdc35] shadow-[5px_5px_0_#11110f]"><BotChainLogo className="h-14 w-14" /></div>
+        <h2 className="workspace-heading">Your public record starts here.</h2>
+        <p className="workspace-copy mt-3 max-w-md">Create a campaign, then make its fingerprint public. It will appear in this vault after the transaction confirms.</p>
+        <span className="status-pill mt-7 bg-[#f1f0eb]"><BotChainLogo className="h-4 w-4" /> Built on BOT Chain</span>
+      </section>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between px-1">
-        <h2 className="text-xs font-semibold text-white/50 uppercase tracking-wider">
-          Anchored Campaigns ({campaigns.length})
-        </h2>
-        <span className="text-[11px] text-white/40">
-          Immutable On-Chain Records
-        </span>
+    <div className="space-y-5">
+      <div className="flex flex-col gap-2 px-1 sm:flex-row sm:items-end sm:justify-between">
+        <div><h2 className="workspace-heading">Your anchored campaigns</h2><p className="mt-1 text-[13px] text-[#6d6a62]">{campaigns.length} public {campaigns.length === 1 ? 'record' : 'records'} from {address.slice(0, 6)}…{address.slice(-4)}</p></div>
+        <span className="status-pill w-max bg-[#dff8eb]"><span className="h-2 w-2 rounded-full bg-[#169b63] border border-[#11110f]" /> Live on {CONFIG.chainName}</span>
       </div>
-
       <div className="grid gap-4 sm:grid-cols-2">
-        {campaigns.map((camp) => (
-          <div
-            key={camp.id}
-            className="apple-glass rounded-3xl p-5 sm:p-6 space-y-4 hover:border-white/[0.15] transition-all duration-200"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-bot/15 text-bot border border-bot/20">
-                  {camp.platform || 'General'}
-                </span>
-                <span className="text-xs text-white/40 font-medium">
-                  {camp.category}
-                </span>
+        {campaigns.map((campaign) => (
+          <article key={campaign.id} className="workspace-card p-5 transition duration-200 hover:-translate-y-1 hover:shadow-[8px_8px_0_rgba(17,17,15,0.16)] sm:p-6">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full border-2 border-[#11110f] bg-[#ffdc35] px-3 py-1 text-[11px] font-extrabold">{campaign.platform || 'General'}</span>
+                <span className="text-[11px] font-bold text-[#6d6a62]">{campaign.category}</span>
               </div>
-              <span className="text-[11px] font-mono text-white/30">
-                #{camp.id}
-              </span>
+              <span className="font-mono text-[11px] font-bold text-[#6d6a62]">#{campaign.id}</span>
             </div>
-
-            <div>
-              <span className="text-[10px] uppercase font-semibold text-white/40 tracking-wider block mb-1">
-                Content Hash
-              </span>
-              <div className="bg-black/40 border border-white/[0.06] rounded-xl p-2.5 font-mono text-xs text-neutral-300 break-all select-all">
-                {camp.contentHash}
-              </div>
+            <div className="mt-5 rounded-[12px] border-2 border-[#11110f] bg-[#f7f7f3] p-3">
+              <span className="block text-[10px] font-black uppercase tracking-[0.08em] text-[#6d6a62]">Exact-text fingerprint</span>
+              <span className="mt-2 block select-all break-all font-mono text-[11px] leading-relaxed text-[#3157d5]">{campaign.contentHash}</span>
             </div>
-
-            <div className="flex items-center justify-between text-xs text-white/40 pt-2 border-t border-white/[0.05]">
-              <span>{camp.timestamp}</span>
-              <a
-                href={`${explorerUrl}address/${contract?.target || CONFIG.contractAddress}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-bot hover:text-[#00e8ba] font-medium transition inline-flex items-center gap-1"
-              >
-                <span>Contract</span>
-                <span>↗</span>
-              </a>
-            </div>
-          </div>
+            <div className="mt-5 flex items-center justify-between gap-3 border-t border-[#d5d2c9] pt-4 text-[11px] text-[#6d6a62]"><span>{campaign.timestamp}</span><a href={`${explorerUrl}address/${contract?.target || CONFIG.contractAddress}`} target="_blank" rel="noopener noreferrer" className="font-extrabold text-[#11110f] underline decoration-2 underline-offset-4">View contract</a></div>
+          </article>
         ))}
       </div>
     </div>

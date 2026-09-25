@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 
 const SUGGESTIONS = [
-  { label: '☕ 20% Off Coffee Weekend', prompt: 'Create an engaging weekend coffee special: 20% off all handcrafted espresso drinks from 8 AM to 2 PM this Saturday and Sunday. Friendly, warm tone.' },
-  { label: '🥐 Artisan Bakery Special', prompt: 'Announce fresh sourdough and almond croissants baked daily at 6 AM. Mention organic local ingredients and a limited morning batch.' },
-  { label: '💇‍♀️ Boutique Salon Flash Sale', prompt: 'Offer 15% off first-time haircuts and styling sessions booked before this Friday. Highlighting personalized hair care and complimentary tea.' },
-  { label: '🍕 BOGO Pizza Friday', prompt: 'Promote buy-one-get-one-free gourmet woodfired pizzas every Friday evening for dine-in and takeout. Casual and celebratory vibe.' }
+  { label: 'Coffee weekend', prompt: 'Create an engaging weekend coffee special: 20% off all handcrafted espresso drinks from 8 AM to 2 PM this Saturday and Sunday. Friendly, warm tone.' },
+  { label: 'Bakery morning', prompt: 'Announce fresh sourdough and almond croissants baked daily at 6 AM. Mention organic local ingredients and a limited morning batch.' },
+  { label: 'Salon first visit', prompt: 'Offer 15% off first-time haircuts and styling sessions booked before this Friday. Highlighting personalized hair care and complimentary tea.' },
+  { label: 'Pizza Friday', prompt: 'Promote buy-one-get-one-free gourmet woodfired pizzas every Friday evening for dine-in and takeout. Casual and celebratory vibe.' }
 ];
 
 const PLATFORMS = [
-  { id: 'Instagram', label: 'Instagram', icon: '📸' },
-  { id: 'Twitter/X', label: 'X / Twitter', icon: '𝕏' },
-  { id: 'Flyer', label: 'Print Flyer', icon: '📄' },
-  { id: 'Google Business', label: 'Google Business', icon: '📍' }
+  { id: 'Instagram', label: 'Instagram' },
+  { id: 'Twitter/X', label: 'X / Twitter' },
+  { id: 'Flyer', label: 'Print flyer' },
+  { id: 'Google Business', label: 'Google Business' }
 ];
 
 const CATEGORIES = [
@@ -22,144 +22,118 @@ const CATEGORIES = [
   'Events & Entertainment'
 ];
 
+function BoltIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M13 2L5 13h6l-1 9 9-12h-6V2z" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function PromptForm({ onGenerate, isLoading }) {
   const [prompt, setPrompt] = useState('');
   const [category, setCategory] = useState('Food & Beverage');
   const [platform, setPlatform] = useState('Instagram');
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = (event) => {
+    event.preventDefault();
     if (!prompt.trim()) return;
     onGenerate({ prompt: prompt.trim(), category, platform });
   };
 
   return (
-    <div className="apple-glass rounded-3xl p-6 sm:p-8 transition-all duration-300">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        
-        {/* Platform Segmented Control */}
+    <section className="workspace-card overflow-hidden">
+      <div className="flex items-center justify-between gap-4 border-b-2 border-[#11110f] bg-[#3157d5] px-5 py-4 text-white sm:px-6">
         <div>
-          <label className="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-2.5" id="platform-label">
-            Target Platform
-          </label>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-black/40 p-1.5 rounded-2xl border border-white/[0.06]" role="group" aria-labelledby="platform-label">
-            {PLATFORMS.map((p) => {
-              const active = platform === p.id;
+          <h2 className="text-[18px] font-extrabold tracking-[-0.035em]">Describe your promotion</h2>
+          <p className="mt-1 text-[12px] text-white">Plain words are enough. PromoVault handles the campaign formatting.</p>
+        </div>
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 border-[#11110f] bg-[#ffdc35] text-[#11110f] shadow-[3px_3px_0_#11110f]">
+          <BoltIcon />
+        </span>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6 p-5 sm:p-6">
+        <fieldset>
+          <legend className="control-label">Where will this campaign run?</legend>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" role="group" aria-label="Target platform">
+            {PLATFORMS.map((option) => {
+              const active = platform === option.id;
               return (
                 <button
+                  key={option.id}
                   type="button"
-                  key={p.id}
                   aria-pressed={active}
-                  onClick={() => setPlatform(p.id)}
-                  className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-medium transition-all duration-150 active:scale-[0.98] ${
+                  onClick={() => setPlatform(option.id)}
+                  className={`min-h-12 rounded-[12px] border-2 border-[#11110f] px-3 text-[12px] font-extrabold transition duration-200 ${
                     active
-                      ? 'bg-white/10 text-white shadow-sm border border-white/10 font-semibold'
-                      : 'text-white/50 hover:text-white/80 hover:bg-white/[0.03]'
+                      ? 'bg-[#3157d5] text-white shadow-[3px_3px_0_#11110f]'
+                      : 'bg-white text-[var(--muted)] hover:-translate-y-0.5 hover:bg-[#f1f0eb] hover:shadow-[3px_3px_0_#11110f]'
                   }`}
                 >
-                  <span className="text-sm">{p.icon}</span>
-                  <span>{p.label}</span>
+                  {option.label}
                 </button>
               );
             })}
           </div>
-        </div>
+        </fieldset>
 
-        {/* Prompt Input */}
         <div>
-          <div className="flex justify-between items-center mb-2">
-            <label className="text-xs font-semibold text-white/50 uppercase tracking-wider" htmlFor="campaign-prompt">
-              Marketing Campaign Brief
-            </label>
-            <span className="text-[11px] text-white/30 font-mono">
-              {prompt.length} characters
-            </span>
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <label className="control-label mb-0" htmlFor="campaign-prompt">What are you promoting?</label>
+            <span className="font-mono text-[11px] tabular-nums text-[#6d6a62]">{prompt.length}/4000</span>
           </div>
-          
-          <div className="relative rounded-2xl bg-black/40 border border-white/[0.08] focus-within:border-bot/60 focus-within:ring-2 focus-within:ring-bot/10 transition-all duration-200">
+          <div className="rounded-[15px] border-2 border-[#11110f] bg-white focus-within:shadow-[4px_4px_0_#11110f]">
             <textarea
-               id="campaign-prompt"
-               maxLength={4000}
-               className="w-full bg-transparent p-4 text-sm text-white placeholder-white/25 focus:outline-none resize-none h-32 leading-relaxed"
-              placeholder="Describe your promotion, discount, event, or brand story..."
+              id="campaign-prompt"
+              maxLength={4000}
+              className="min-h-36 w-full resize-none rounded-[14px] bg-transparent px-4 py-4 text-[15px] leading-relaxed text-[#11110f] placeholder:text-[#858279] focus:outline-none"
+              placeholder="A weekend special, a new opening, a local event, a product launch..."
               value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
+              onChange={(event) => setPrompt(event.target.value)}
             />
-            
-            {/* Quick Inspiration Chips */}
-            <div className="p-3 pt-0 flex flex-wrap gap-1.5 border-t border-white/[0.04]">
-              <span className="text-[10px] uppercase font-semibold tracking-wider text-white/30 self-center mr-1">
-                Presets:
-              </span>
-              {SUGGESTIONS.map((s, idx) => (
+            <div className="flex flex-wrap items-center gap-2 border-t-2 border-[#11110f] px-4 py-3">
+              <span className="mr-1 text-[10px] font-black uppercase tracking-[0.09em] text-[#6d6a62]">Try a brief</span>
+              {SUGGESTIONS.map((suggestion) => (
                 <button
-                  key={idx}
+                  key={suggestion.label}
                   type="button"
-                  onClick={() => setPrompt(s.prompt)}
-                  className="text-[11px] px-2.5 py-1 rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-white/70 hover:text-white border border-white/[0.05] transition-all duration-150 active:scale-[0.97]"
+                  onClick={() => setPrompt(suggestion.prompt)}
+                  className="rounded-full border border-[#11110f] bg-[#f1f0eb] px-3 py-1.5 text-[11px] font-bold transition hover:bg-[#ffdc35]"
                 >
-                  {s.label}
+                  {suggestion.label}
                 </button>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Category & Action Bar */}
-        <div className="flex flex-col sm:flex-row gap-4 items-center">
-          <div className="w-full sm:w-1/2">
-            <label className="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-2" htmlFor="business-category">
-              Business Category
-            </label>
+        <div className="grid gap-4 sm:grid-cols-[0.72fr_1.28fr] sm:items-end">
+          <div>
+            <label className="control-label" htmlFor="business-category">Your business</label>
             <div className="relative">
               <select
                 id="business-category"
-                className="w-full appearance-none bg-black/40 border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-xs text-white/90 focus:outline-none focus:border-bot/60 focus:ring-1 focus:ring-bot/20 pr-8 cursor-pointer transition-colors"
+                className="control-input appearance-none pr-10 font-bold"
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                onChange={(event) => setCategory(event.target.value)}
               >
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c} className="bg-neutral-900 text-white">
-                    {c}
-                  </option>
-                ))}
+                {CATEGORIES.map((option) => <option key={option}>{option}</option>)}
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-white/40">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
+              <svg className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </div>
           </div>
-
-          <div className="w-full sm:w-1/2 sm:self-end">
-            <button
-              type="submit"
-              disabled={isLoading || !prompt.trim()}
-              className="w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-2xl bg-bot hover:bg-[#00e8ba] text-black text-sm font-semibold tracking-tight transition-all duration-150 active:scale-[0.98] shadow-lg shadow-bot/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
-            >
-              {isLoading ? (
-                <>
-                  <svg className="animate-spin h-4 w-4 text-black" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  <span>Generating Copy...</span>
-                </>
-              ) : (
-                <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  <span>Generate Campaign Copy</span>
-                </>
-              )}
-            </button>
-          </div>
+          <button type="submit" disabled={isLoading || !prompt.trim()} className="primary-submit">
+            <svg className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''}`} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M13 2L5 13h6l-1 9 9-12h-6V2z" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+            </svg>
+            {isLoading ? 'Creating your campaign…' : 'Create my campaign'}
+          </button>
         </div>
-
       </form>
-    </div>
+    </section>
   );
 }
 

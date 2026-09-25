@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f4f0e7" />
+  <title>PromoVault — Concept Lab</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap');
+
+    :root {
+      --paper: #f4f0e7;
+      --paper-2: #ebe4d7;
+      --ink: #181915;
+      --muted: #5e5c53;
+      --line: #191a16;
+      --coral: #f06b4f;
+      --coral-dark: #a9402e;
+      --lime: #c9ed5b;
+      --teal: #075b52;
+      --blue: #bddbff;
+      --yellow: #f5d45e;
+      --shadow: 7px 7px 0 var(--line);
+      --radius: 14px;
+      --display: 'Syne', 'Arial Black', sans-serif;
+      --mono: 'DM Mono', 'SFMono-Regular', monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html { background: var(--paper); color: var(--ink); scroll-behavior: smooth; }
+    body { margin: 0; min-width: 320px; background: var(--paper); font-family: var(--display); }
+    button, input, textarea, select { font: inherit; }
+    button { color: inherit; cursor: pointer; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid var(--coral); outline-offset: 3px; }
+    ::selection { background: var(--lime); color: var(--ink); }
+
+    #field { position: fixed; inset: 0; z-index: -2; pointer-events: none; opacity: .68; }
+    .grain { position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .12; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E"); mix-blend-mode: multiply; }
+
+    .shell { width: min(1440px, calc(100% - 40px)); margin: 0 auto; }
+    .topbar { min-height: 78px; display: flex; align-items: center; justify-content: space-between; gap: 24px; border-bottom: 2px solid var(--line); }
+    .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); font-weight: 700; letter-spacing: -.04em; }
+    .brand-mark { width: 30px; height: 30px; display: grid; place-items: center; background: var(--coral); border: 2px solid var(--line); box-shadow: 3px 3px 0 var(--line); font-size: 12px; }
+    .brand small { display: block; font: 11px var(--mono); color: var(--muted); letter-spacing: .05em; margin-top: 1px; }
+    .lab-note { font: 11px var(--mono); text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
+
+    .hero { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 30px; align-items: end; padding: 64px 0 38px; }
+    .hero h1 { max-width: 920px; margin: 0; font-size: clamp(46px, 8vw, 118px); line-height: .89; letter-spacing: -.075em; font-weight: 700; }
+    .hero h1 em { color: var(--coral-dark); font-style: normal; }
+    .hero p { max-width: 530px; margin: 26px 0 0; color: var(--muted); font-size: 16px; line-height: 1.5; }
+    .hero-index { border: 2px solid var(--line); background: var(--lime); box-shadow: var(--shadow); padding: 20px; transform: rotate(2deg); }
+    .hero-index strong { display: block; font-size: 42px; letter-spacing: -.07em; line-height: 1; }
+    .hero-index span { display: block; font: 11px var(--mono); line-height: 1.4; margin-top: 9px; }
+
+    .tabs { display: flex; gap: 8px; overflow-x: auto; padding: 12px 0 18px; scrollbar-width: thin; }
+    .tab { flex: 0 0 auto; display: flex; align-items: center; gap: 9px; border: 2px solid var(--line); background: var(--paper); padding: 11px 14px; box-shadow: 3px 3px 0 transparent; transition: transform .18s, box-shadow .18s, background .18s; }
+    .tab:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 var(--line); }
+    .tab[aria-selected="true"] { background: var(--ink); color: var(--paper); box-shadow: 4px 4px 0 var(--coral); }
+    .tab b { font: 11px var(--mono); opacity: .65; }
+    .tab span { font-size: 13px; font-weight: 600; white-space: nowrap; }
+
+    .preview { position: relative; min-height: 670px; border: 2px solid var(--line); background: rgba(244, 240, 231, .82); box-shadow: 12px 12px 0 rgba(24, 25, 21, .12); overflow: hidden; }
+    .screen { display: none; min-height: 670px; animation: arrive .45s cubic-bezier(.16, 1, .3, 1) both; }
+    .screen.active { display: block; }
+    @keyframes arrive { from { opacity: 0; transform: translateY(9px) } to { opacity: 1; transform: translateY(0) } }
+    .screen-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 13px 16px; border-bottom: 2px solid var(--line); background: var(--paper); }
+    .window-dots { display: flex; gap: 6px; }
+    .window-dots i { width: 9px; height: 9px; border: 1px solid var(--line); border-radius: 50%; background: var(--coral); }
+    .window-dots i:nth-child(2) { background: var(--yellow); }
+    .window-dots i:nth-child(3) { background: var(--lime); }
+    .screen-bar code { font: 11px var(--mono); color: var(--muted); }
+
+    .section-label { font: 11px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+    .pill { display: inline-flex; align-items: center; gap: 7px; padding: 6px 9px; border: 1.5px solid var(--line); border-radius: 999px; font: 11px var(--mono); background: var(--paper); }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--coral); }
+    .btn { border: 2px solid var(--line); background: var(--coral); color: var(--ink); padding: 13px 17px; font-weight: 700; box-shadow: 4px 4px 0 var(--line); transition: transform .16s, box-shadow .16s, background .16s; }
+    .btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--line); }
+    .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--line); }
+    .btn.dark { background: var(--ink); color: var(--paper); }
+    .btn.soft { background: var(--lime); }
+    .btn.flat { box-shadow: none; }
+    .btn:disabled { cursor: not-allowed; opacity: .45; transform: none; box-shadow: 4px 4px 0 var(--line); }
+    .input { width: 100%; border: 2px solid var(--line); background: var(--paper); color: var(--ink); padding: 13px 14px; }
+    .input::placeholder { color: #8a877e; }
+
+    .one-layout { display: grid; grid-template-columns: 1fr 1.1fr; gap: 24px; padding: 30px; }
+    .one-intro { display: flex; flex-direction: column; justify-content: space-between; min-height: 510px; }
+    .one-intro h2 { max-width: 480px; margin: 18px 0 0; font-size: clamp(42px, 6vw, 78px); line-height: .9; letter-spacing: -.075em; }
+    .one-intro h2 mark { background: var(--lime); color: var(--ink); padding: 0 .08em; }
+    .one-intro p { max-width: 410px; color: var(--muted); line-height: 1.5; margin: 0; }
+    .one-form { border: 2px solid var(--line); background: var(--lime); padding: 24px; box-shadow: var(--shadow); transform: rotate(1deg); }
+    .one-form h3, .stamp-card h3, .bench-card h3 { margin: 0; font-size: 20px; letter-spacing: -.04em; }
+    .field-label { display: block; margin: 22px 0 7px; font: 11px var(--mono); text-transform: uppercase; letter-spacing: .06em; }
+    .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+    .chip { border: 1.5px solid var(--line); background: var(--paper); padding: 7px 9px; font-size: 11px; }
+    .chip:hover { background: var(--yellow); }
+    .one-form .btn { width: 100%; margin-top: 24px; }
+    .mini-note { margin: 13px 0 0; color: var(--muted); font: 11px/1.45 var(--mono); }
+    .result-pop { display: none; margin-top: 18px; padding: 15px; border: 2px solid var(--line); background: var(--paper); }
+    .result-pop.show { display: block; animation: pop .35s cubic-bezier(.16, 1, .3, 1); }
+    @keyframes pop { from { opacity: 0; transform: scale(.94) rotate(-1deg) } to { opacity: 1; transform: scale(1) rotate(0) } }
+
+    .bench-layout { padding: 28px; background: var(--ink); color: var(--paper); position: relative; }
+    .bench-layout::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 76% 12%, rgba(201, 237, 91, .18), transparent 26%), radial-gradient(circle at 20% 82%, rgba(240, 107, 79, .26), transparent 30%); pointer-events: none; }
+    .bench-top { display: flex; justify-content: space-between; align-items: start; gap: 20px; position: relative; }
+    .bench-top h2 { max-width: 650px; margin: 16px 0 0; font-size: clamp(38px, 6vw, 72px); line-height: .9; letter-spacing: -.075em; }
+    .bench-top h2 span { color: var(--lime); }
+    .bench-meta { display: flex; gap: 8px; flex-wrap: wrap; justify-content: end; }
+    .bench-meta .pill { color: var(--paper); border-color: rgba(244,240,231,.35); background: transparent; }
+    .bench-stage { min-height: 365px; display: grid; grid-template-columns: 1.1fr .9fr; align-items: end; gap: 25px; position: relative; }
+    .orb-wrap { min-height: 350px; display: grid; place-items: center; }
+    .orb { width: min(300px, 65vw); aspect-ratio: 1; border: 2px solid var(--lime); border-radius: 50%; position: relative; background: radial-gradient(circle at 38% 31%, #fff6b0 0 4%, var(--coral) 5% 24%, #d14e3b 25% 45%, #682d36 46% 66%, #131614 67%); box-shadow: 0 0 0 10px rgba(201,237,91,.08), 0 0 0 22px rgba(201,237,91,.04), 0 16px 30px rgba(24,25,21,.18); transition: transform .3s ease-out; }
+    .orb::after { content: ''; position: absolute; inset: 12%; border: 1px solid rgba(244,240,231,.5); border-radius: 50%; transform: rotate(-30deg) scaleX(.55); }
+    .bench-card { border: 2px solid var(--paper); padding: 20px; background: rgba(244,240,231,.05); }
+    .bench-card p { color: rgba(244,240,231,.62); font-size: 14px; line-height: 1.5; }
+    .bench-flow { display: flex; gap: 0; margin-top: 22px; position: relative; }
+    .bench-flow div { flex: 1; border-top: 2px solid var(--lime); padding: 11px 10px 0 0; font: 11px var(--mono); text-transform: uppercase; }
+    .bench-flow div + div { padding-left: 12px; }
+    .bench-flow strong { display: block; color: var(--paper); font: 16px var(--display); letter-spacing: -.04em; margin-top: 4px; }
+
+    .stamp-layout { display: grid; grid-template-columns: .8fr 1.2fr; gap: 34px; padding: 30px; background: var(--coral); }
+    .stamp-copy { display: flex; flex-direction: column; justify-content: space-between; }
+    .stamp-copy h2 { margin: 15px 0 0; max-width: 420px; font-size: clamp(42px, 6vw, 76px); line-height: .88; letter-spacing: -.04em; }
+    .stamp-copy p { color: #55241e; max-width: 360px; line-height: 1.45; }
+    .stamp-ticket { position: relative; background: var(--paper); border: 2px solid var(--line); box-shadow: 12px 12px 0 rgba(24,25,21,.23); padding: 26px; transform: rotate(-1.5deg); }
+    .stamp-ticket::before, .stamp-ticket::after { content: ''; position: absolute; left: 0; right: 0; height: 10px; background: linear-gradient(135deg, var(--paper) 7px, transparent 0) 0 0/14px 14px, linear-gradient(45deg, var(--paper) 7px, transparent 0) 0 0/14px 14px; }
+    .stamp-ticket::before { top: -9px; }
+    .stamp-ticket::after { bottom: -9px; transform: rotate(180deg); }
+    .ticket-head { display: flex; justify-content: space-between; border-bottom: 2px dashed var(--line); padding-bottom: 16px; }
+    .ticket-head strong { font-size: 22px; letter-spacing: -.05em; }
+    .ticket-head span { font: 11px var(--mono); align-self: start; }
+    .hash-block { padding: 27px 0; }
+    .hash-block small { font: 11px var(--mono); text-transform: uppercase; letter-spacing: .08em; }
+    .hash { margin: 10px 0 0; font: clamp(22px, 4vw, 42px)/1.05 var(--mono); letter-spacing: -.04em; overflow-wrap: anywhere; }
+    .ticket-footer { display: flex; justify-content: space-between; gap: 15px; align-items: end; border-top: 2px dashed var(--line); padding-top: 18px; }
+    .ticket-footer p { max-width: 220px; margin: 0; font: 11px/1.45 var(--mono); }
+    .stamp-action { position: relative; display: inline-flex; align-items: center; justify-content: center; min-width: 175px; min-height: 55px; border: 2px solid var(--line); background: var(--lime); font-weight: 700; box-shadow: 5px 5px 0 var(--line); }
+    .stamp-action.stamped { background: var(--teal); color: var(--paper); }
+    .stamp-action.stamped::after { content: 'STAMPED'; position: absolute; inset: 6px; display: grid; place-items: center; border: 3px solid var(--paper); transform: rotate(-11deg); font: 700 20px var(--mono); }
+
+    .physical { background: var(--blue); }
+    .physical-layout { padding: 30px; }
+    .physical-head { display: flex; justify-content: space-between; gap: 20px; align-items: end; margin-bottom: 24px; }
+    .physical-head h2 { margin: 0; font-size: clamp(40px, 6vw, 70px); line-height: .88; letter-spacing: -.04em; }
+    .physical-head p { max-width: 290px; margin: 0; font-size: 14px; line-height: 1.45; }
+    .physical-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .physical-card { min-height: 220px; border: 2px solid var(--line); background: var(--paper); padding: 20px; box-shadow: 5px 5px 0 var(--line); display: flex; flex-direction: column; justify-content: space-between; transform: rotate(var(--tilt)); transition: transform .25s, box-shadow .25s; }
+    .physical-card:hover { transform: rotate(0) translateY(-7px); box-shadow: 9px 9px 0 var(--line); }
+    .physical-card:nth-child(2) { background: var(--yellow); }
+    .physical-card:nth-child(3) { background: var(--lime); }
+    .physical-card strong { font-size: 38px; letter-spacing: -.04em; }
+    .physical-card span { font: 11px/1.4 var(--mono); }
+    .physical-card button { align-self: start; }
+    .motion-strip { display: flex; gap: 10px; align-items: center; margin-top: 24px; font: 11px var(--mono); text-transform: uppercase; }
+    .motion-track { height: 11px; flex: 1; border: 2px solid var(--line); background: var(--paper); overflow: hidden; }
+    .motion-track i { display: block; width: 40%; height: 100%; background: var(--coral); transform: translateX(80%); }
+    @keyframes travel { 0%,100% { transform: translateX(-100%) } 50% { transform: translateX(250%) } }
+
+    .scan-layout { display: grid; grid-template-columns: 1fr 1fr; min-height: 610px; }
+    .scan-left { padding: 31px; background: var(--ink); color: var(--paper); }
+    .scan-left h2 { max-width: 480px; margin: 18px 0; font-size: clamp(42px, 6vw, 76px); line-height: .88; letter-spacing: -.04em; }
+    .scan-left h2 span { color: var(--lime); }
+    .scan-left p { max-width: 430px; color: rgba(244,240,231,.64); line-height: 1.5; }
+    .scan-form { margin-top: 40px; max-width: 470px; }
+    .scan-form .input { background: #282a25; color: var(--paper); border-color: rgba(244,240,231,.42); }
+    .scan-form .btn { width: 100%; margin-top: 15px; }
+    .scan-right { background: var(--paper); padding: 31px; display: flex; flex-direction: column; justify-content: center; }
+    .receipt { border: 2px solid var(--line); background: var(--lime); box-shadow: var(--shadow); padding: 24px; transform: rotate(2deg); }
+    .receipt h3 { margin: 0 0 22px; font-size: 22px; letter-spacing: -.05em; }
+    .receipt-row { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid rgba(24,25,21,.35); font: 11px var(--mono); }
+    .receipt-row span:last-child { text-align: right; }
+    .scan-stamp { display: grid; place-items: center; width: 95px; height: 95px; margin: 22px auto 0; border: 3px solid var(--teal); color: var(--teal); border-radius: 50%; font: 700 11px var(--mono); text-align: center; transform: rotate(-12deg); }
+    .scan-success { display: none; margin-top: 15px; padding: 14px; border: 2px solid var(--teal); background: rgba(8,127,114,.1); }
+    .scan-success.show { display: block; animation: pop .35s ease-out; }
+
+    .footer { padding: 30px 0 70px; display: flex; justify-content: space-between; gap: 24px; color: var(--muted); font: 11px var(--mono); }
+    .footer strong { color: var(--ink); }
+
+    @media (max-width: 800px) {
+      .shell { width: min(100% - 24px, 650px); }
+      .topbar { min-height: 64px; }
+      .lab-note { display: none; }
+      .hero { grid-template-columns: 1fr; padding: 45px 0 28px; }
+      .hero-index { max-width: 280px; transform: rotate(0); }
+      .one-layout, .stamp-layout, .scan-layout { grid-template-columns: 1fr; }
+      .one-intro { min-height: 0; gap: 25px; }
+      .one-form { transform: rotate(0); }
+      .bench-top, .physical-head { display: block; }
+      .bench-meta { justify-content: start; margin-top: 20px; }
+      .bench-stage { grid-template-columns: 1fr; }
+      .orb-wrap { min-height: 270px; }
+      .bench-flow { margin-top: 8px; }
+      .physical-head p { margin-top: 16px; }
+      .physical-grid { grid-template-columns: 1fr; }
+      .physical-card { min-height: 170px; }
+      .scan-left, .scan-right { padding: 26px 22px; }
+      .footer { display: block; line-height: 1.6; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+      #field { opacity: .25; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="field" aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="PromoVault concept lab home">
+        <span class="brand-mark">PV</span>
+        <span>PromoVault<small>concept lab / 2026</small></span>
+      </a>
+      <div class="lab-note">five directions for making proof feel tangible</div>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div>
+          <h1>Make the proof <em>impossible</em> to miss.</h1>
+          <p>Five live directions for a warmer, stranger, more ownable PromoVault. Click through each tab, use the controls, and feel the interaction model—not just the colors.</p>
+        </div>
+        <div class="hero-index"><strong>05</strong><span>visual worlds<br>one product truth</span></div>
+      </section>
+
+      <nav class="tabs" role="tablist" aria-label="Design directions">
+        <button class="tab" role="tab" aria-selected="true" data-screen="proof-station"><b>01</b><span>Warm proof station</span></button>
+        <button class="tab" role="tab" aria-selected="false" data-screen="campaign-bench"><b>02</b><span>Campaign bench</span></button>
+        <button class="tab" role="tab" aria-selected="false" data-screen="receipt-stamp"><b>03</b><span>Receipt stamp</span></button>
+        <button class="tab" role="tab" aria-selected="false" data-screen="physical-ui"><b>04</b><span>Physical UI</span></button>
+        <button class="tab" role="tab" aria-selected="false" data-screen="public-scanner"><b>05</b><span>Public scanner</span></button>
+      </nav>
+
+      <section class="preview" aria-live="polite">
+        <article class="screen active" id="proof-station">
+          <div class="screen-bar"><div class="window-dots"><i></i><i></i><i></i></div><code>01 / warm proof station</code><span class="pill"><span class="dot"></span> live concept</span></div>
+          <div class="one-layout">
+            <div class="one-intro">
+              <div><span class="section-label">PromoVault / local business marketing</span><h2>Write it.<br><mark>Stamp it.</mark><br>Keep it.</h2></div>
+              <p>A calm, editorial canvas for the moment a small business turns a good idea into a defensible record. The interface gets out of the way; the work gets the drama.</p>
+              <div class="chips"><span class="chip">parchment</span><span class="chip">coral action</span><span class="chip">lime verified</span></div>
+            </div>
+            <div>
+              <div class="one-form">
+                <h3>Start with the offer.</h3>
+                <label class="field-label" for="offer">What are you promoting?</label>
+                <textarea class="input" id="offer" rows="4">A 20% coffee weekend for our neighborhood roaster.</textarea>
+                <label class="field-label">Choose a channel</label>
+                <div class="chips"><button class="chip selected" type="button">Instagram</button><button class="chip" type="button">Google Business</button><button class="chip" type="button">Flyer</button></div>
+                <button class="btn" type="button" data-generate>Generate campaign copy <span aria-hidden="true">↗</span></button>
+                <div class="result-pop" data-result><strong>Copy drafted.</strong><p class="mini-note">Now the exact text can be copied, reviewed, and anchored as a public fingerprint.</p><button class="btn flat soft" type="button" data-copy>Copy draft</button></div>
+                <p class="mini-note">Demo data only. The real app uses your configured LLM and a wallet only when you anchor.</p>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="screen" id="campaign-bench">
+          <div class="screen-bar"><div class="window-dots"><i></i><i></i><i></i></div><code>02 / campaign bench</code><span class="pill"><span class="dot"></span> pointer-reactive</span></div>
+          <div class="bench-layout">
+            <div class="bench-top"><div><span class="section-label" style="color:rgba(244,240,231,.55)">The machine is quiet. The idea is not.</span><h2>Turn a brief into a <span>signal.</span></h2></div><div class="bench-meta"><span class="pill">BOT TESTNET</span><span class="pill">SHA-256 READY</span></div></div>
+            <div class="bench-stage">
+              <div class="orb-wrap"><div class="orb" id="orb" aria-label="Interactive orb preview"></div></div>
+              <div class="bench-card"><span class="section-label" style="color:var(--lime)">Live campaign bench</span><h3 style="margin-top:9px">A local offer, made public.</h3><p>The orbit is the visual metaphor: a brief enters, a usable asset leaves, and a proof record remains. Move your pointer across it.</p><div class="bench-flow"><div>Input<strong>Brief</strong></div><div>Output<strong>Copy</strong></div><div>Receipt<strong>Hash</strong></div></div><button class="btn" style="margin-top:22px;background:var(--lime)" type="button" data-generate>Run a demo brief</button><div class="result-pop" data-result style="color:var(--ink)"><strong>Signal found.</strong><p class="mini-note">A social-ready draft is ready for review.</p></div></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="screen" id="receipt-stamp">
+          <div class="screen-bar"><div class="window-dots"><i></i><i></i><i></i></div><code>03 / receipt stamp</code><span class="pill"><span class="dot"></span> proof as artifact</span></div>
+          <div class="stamp-layout">
+            <div class="stamp-copy"><div><span class="section-label" style="color:#6d2e25">The useful part is the proof.</span><h2>Give the hash a body.</h2></div><p>Forget the vague “AI generated this” promise. The receipt makes the product’s real distinction tangible: this exact text was recorded at this time by this address.</p><span class="pill" style="width:max-content;background:var(--paper)">public record / no wallet needed to verify</span></div>
+            <div class="stamp-ticket"><div class="ticket-head"><strong>PromoVault receipt</strong><span>#PV—0248<br>BOT CHAIN</span></div><div class="hash-block"><small>Campaign fingerprint / SHA-256</small><p class="hash" data-hash>8f2a 4c91 e7b0 65d4<br>21aa 908c 3f0b 2e17<br>6c5d 11ad 84b2 0f7e</p></div><div class="ticket-footer"><p>Exact generated text only. Any edit changes this fingerprint.</p><button class="stamp-action" type="button" data-stamp>Stamp this record</button></div></div>
+          </div>
+        </article>
+
+        <article class="screen" id="physical-ui">
+          <div class="screen-bar"><div class="window-dots"><i></i><i></i><i></i></div><code>04 / physical UI</code><span class="pill"><span class="dot"></span> tactile controls</span></div>
+          <div class="physical-layout"><div class="physical-head"><div><span class="section-label" style="color:#315070">PromoVault as a desk tool</span><h2>Make the action<br>feel <span style="text-decoration:underline;text-decoration-thickness:5px;text-decoration-color:var(--coral)">obvious.</span></h2></div><p>Buttons become objects. The interface is minimal, but every state has a physical response: press, lift, stamp, settle.</p></div><div class="physical-grid"><div class="physical-card" style="--tilt:-1deg"><span>01 / INPUT</span><strong>Write</strong><span>Start with a plain-language brief. No prompt engineering degree required.</span><button class="btn flat" type="button" data-generate>Open brief</button></div><div class="physical-card" style="--tilt:1deg"><span>02 / OUTPUT</span><strong>Review</strong><span>See the copy as a usable campaign asset, not a chat response.</span><button class="btn flat" type="button" data-generate>Generate demo</button></div><div class="physical-card" style="--tilt:-.5deg"><span>03 / PROOF</span><strong>Stamp</strong><span>One deliberate action commits the exact bytes to a public record.</span><button class="btn flat dark" type="button" data-stamp>Stamp record</button></div></div><div class="motion-strip"><span>press</span><div class="motion-track"><i></i></div><span>settle</span></div><div class="result-pop" data-result style="background:var(--paper);margin-top:20px"><strong>Interaction received.</strong><p class="mini-note">In the product, this is where the generated copy becomes an asset you can trust.</p></div></div>
+        </article>
+
+        <article class="screen" id="public-scanner">
+          <div class="screen-bar"><div class="window-dots"><i></i><i></i><i></i></div><code>05 / public scanner</code><span class="pill"><span class="dot"></span> trust without jargon</span></div>
+          <div class="scan-layout"><div class="scan-left"><span class="section-label" style="color:rgba(244,240,231,.5)">Verification, without the blockchain homework</span><h2>Scan a receipt.<br><span>See the record.</span></h2><p>Paste the exact copy or its fingerprint. PromoVault reads the public chain directly. No wallet, no account, no mystery.</p><div class="scan-form"><label class="field-label" for="scan-input" style="color:rgba(244,240,231,.6)">Exact campaign text or 32-byte hash</label><textarea class="input" id="scan-input" rows="4">Weekend coffee: 20% off all handcrafted espresso drinks, Saturday and Sunday, 8 AM–2 PM.</textarea><button class="btn soft" type="button" data-verify>Scan public record <span aria-hidden="true">↗</span></button><div class="scan-success" data-success><strong>Record found.</strong><p class="mini-note">Submitted by 0x71…a90c · first recorded 12 Sep 2026 · BOT Chain testnet</p></div></div></div><div class="scan-right"><div class="receipt"><h3>Public proof receipt</h3><div class="receipt-row"><span>Status</span><strong style="color:var(--teal)">FOUND</strong></div><div class="receipt-row"><span>Network</span><strong>BOT Chain testnet</strong></div><div class="receipt-row"><span>Submitted by</span><strong>0x71…a90c</strong></div><div class="receipt-row"><span>First recorded</span><strong>12 Sep 2026</strong></div><div class="scan-stamp">PUBLIC<br>RECORD</div></div></div></div>
+        </article>
+      </section>
+    </main>
+    <footer class="footer"><span><strong>PromoVault concept lab</strong> / generated for design review</span><span>Directional interface studies · not production copy</span></footer>
+  </div>
+
+  <script>
+    const tabs = [...document.querySelectorAll('.tab')];
+    const screens = [...document.querySelectorAll('.screen')];
+    tabs.forEach((tab) => tab.addEventListener('click', () => {
+      tabs.forEach((item) => item.setAttribute('aria-selected', item === tab));
+      screens.forEach((screen) => screen.classList.toggle('active', screen.id === tab.dataset.screen));
+    }));
+
+    document.querySelectorAll('[data-generate]').forEach((button) => button.addEventListener('click', () => {
+      const result = button.closest('.one-form, .bench-card, .physical-layout')?.querySelector('[data-result]');
+      if (!result) return;
+      button.disabled = true;
+      const original = button.innerHTML;
+      button.textContent = 'Drafting…';
+      setTimeout(() => { button.disabled = false; button.innerHTML = original; result.classList.add('show'); }, 700);
+    }));
+
+    document.querySelectorAll('[data-stamp]').forEach((button) => button.addEventListener('click', () => {
+      button.classList.add('stamped');
+      button.setAttribute('aria-label', 'Record stamped');
+    }));
+
+    document.querySelectorAll('[data-copy]').forEach((button) => button.addEventListener('click', async () => {
+      const value = 'Weekend coffee: 20% off all handcrafted espresso drinks, Saturday and Sunday, 8 AM–2 PM.';
+      try { await navigator.clipboard.writeText(value); button.textContent = 'Copied to clipboard'; } catch { button.textContent = 'Select text to copy'; }
+      setTimeout(() => { button.textContent = 'Copy draft'; }, 1600);
+    }));
+
+    document.querySelectorAll('[data-verify]').forEach((button) => button.addEventListener('click', () => {
+      const success = button.parentElement.querySelector('[data-success]');
+      button.disabled = true;
+      button.textContent = 'Reading public record…';
+      setTimeout(() => { button.disabled = false; button.textContent = 'Scan public record ↗'; success.classList.add('show'); }, 750);
+    }));
+
+    const orb = document.getElementById('orb');
+    if (orb) {
+      document.getElementById('campaign-bench').addEventListener('pointermove', (event) => {
+        const rect = orb.getBoundingClientRect();
+        const x = (event.clientX - rect.left) / rect.width - .5;
+        const y = (event.clientY - rect.top) / rect.height - .5;
+        orb.style.transform = `rotateX(${y * -20}deg) rotateY(${x * 24}deg) translateZ(8px)`;
+      });
+      document.getElementById('campaign-bench').addEventListener('pointerleave', () => { orb.style.transform = ''; });
+    }
+
+    const canvas = document.getElementById('field');
+    const gl = canvas.getContext('webgl', { alpha: true, antialias: true });
+    let program;
+    let timeLoc;
+    let pointerLoc;
+    let pointer = { x: .5, y: .5 };
+    const vertex = `attribute vec2 p; void main(){ gl_Position=vec4(p,0.,1.); }`;
+    const fragment = `precision mediump float; uniform float t; uniform vec2 mouse; float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453); } float noise(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f); return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),f.x),f.y); } void main(){ vec2 uv=gl_FragCoord.xy/vec2(1000.,700.); vec2 p=uv; p.x += (mouse.x-.5)*.12; float n=noise(p*3.+t*.035); float n2=noise(p*8.-t*.02); float glow=smoothstep(.75,.1,length(uv-vec2(.8,.18))); vec3 a=vec3(.957,.941,.906); vec3 b=vec3(.941,.420,.310); vec3 c=vec3(.788,.929,.357); vec3 col=mix(a,b,clamp(n*.28+n2*.08,0.,.35)); col=mix(col,c,glow*.16); float grain=hash(gl_FragCoord.xy+t)*.018; gl_FragColor=vec4(col+grain,1.); }`;
+    function compile(type, source) { const shader = gl.createShader(type); gl.shaderSource(shader, source); gl.compileShader(shader); return shader; }
+    if (gl) {
+      program = gl.createProgram();
+      gl.attachShader(program, compile(gl.VERTEX_SHADER, vertex));
+      gl.attachShader(program, compile(gl.FRAGMENT_SHADER, fragment));
+      gl.linkProgram(program); gl.useProgram(program);
+      const buffer = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buffer); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]), gl.STATIC_DRAW);
+      const loc = gl.getAttribLocation(program, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+      timeLoc = gl.getUniformLocation(program, 't'); pointerLoc = gl.getUniformLocation(program, 'mouse');
+      const resize = () => { const ratio = Math.min(devicePixelRatio, 2); canvas.width = innerWidth * ratio; canvas.height = innerHeight * ratio; gl.viewport(0, 0, canvas.width, canvas.height); };
+      resize(); addEventListener('resize', resize);
+      addEventListener('pointermove', (event) => { pointer.x = event.clientX / innerWidth; pointer.y = 1 - event.clientY / innerHeight; }, { passive: true });
+      const start = performance.now();
+      const draw = (now) => { gl.uniform1f(timeLoc, (now - start) / 1000); gl.uniform2f(pointerLoc, pointer.x, pointer.y); gl.drawArrays(gl.TRIANGLES, 0, 6); requestAnimationFrame(draw); };
+      requestAnimationFrame(draw);
+    }
+  </script>
+</body>
+</html>

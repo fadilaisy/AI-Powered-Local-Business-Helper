@@ -1,54 +1,32 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
-    "./index.html",
-    "./src/**/*.{js,jsx}",
+    './index.html',
+    './src/**/*.{js,jsx}'
   ],
   theme: {
     extend: {
       colors: {
         bot: {
-          DEFAULT: '#00D4AA',
-          hover: '#00F0C0',
-          dim: 'rgba(0, 212, 170, 0.12)',
+          DEFAULT: '#3157d5',
+          hover: '#2447c4',
+          dim: 'rgba(49, 87, 213, 0.12)'
         },
-        apple: {
-          bg: '#000000',
-          surface: '#121214',
-          card: 'rgba(255, 255, 255, 0.04)',
-          border: 'rgba(255, 255, 255, 0.08)',
-          highlight: 'rgba(255, 255, 255, 0.12)',
-          subtext: '#86868b',
-        }
+        ink: '#11110f',
+        canvas: '#f7f7f3',
+        action: '#ffdc35',
+        coral: '#ff715b',
+        success: '#169b63',
+        danger: '#c43d35'
       },
       fontFamily: {
-        sans: [
-          '-apple-system',
-          'BlinkMacSystemFont',
-          '"SF Pro Display"',
-          '"SF Pro Text"',
-          '"SF Pro"',
-          'system-ui',
-          'sans-serif',
-        ],
-        mono: [
-          '"SF Mono"',
-          'Menlo',
-          'Monaco',
-          'Consolas',
-          'monospace'
-        ]
+        sans: ['Figtree', 'Arial', 'sans-serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace']
       },
       boxShadow: {
-        'apple-card': '0 20px 40px -15px rgba(0, 0, 0, 0.7), inset 0 1px 0 0 rgba(255, 255, 255, 0.08)',
-        'apple-glow': '0 0 25px rgba(0, 212, 170, 0.25)',
-      },
-      borderRadius: {
-        'apple': '22px',
-        'apple-sm': '14px',
-        'apple-lg': '28px',
+        card: '7px 7px 0 rgba(17,17,15,0.16)'
       }
-    },
+    }
   },
-  plugins: [],
-}
+  plugins: []
+};

@@ -1,10 +1,38 @@
 import React, { useState } from 'react';
 import { CONFIG } from '../lib/config';
 
+function CopyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="8" y="8" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function AnchorIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 7v10M7 10H4v3a8 8 0 0 0 16 0v-3h-3M8 7h8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9 7V4h6v3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function GeneratedCopy({ generatedText, contentHash, onAnchor, isAnchoring, txHash, source }) {
   const [copied, setCopied] = useState(false);
   const [hashCopied, setHashCopied] = useState(false);
   const [copyError, setCopyError] = useState('');
+  const explorerUrl = CONFIG.blockExplorerUrls[0];
+
   const handleCopyText = async () => {
     try {
       await navigator.clipboard.writeText(generatedText);
@@ -17,147 +45,83 @@ function GeneratedCopy({ generatedText, contentHash, onAnchor, isAnchoring, txHa
   };
 
   const handleCopyHash = async () => {
-    if (contentHash) {
-      try {
-        await navigator.clipboard.writeText(contentHash);
-        setCopyError('');
-        setHashCopied(true);
-        setTimeout(() => setHashCopied(false), 2000);
-      } catch {
-        setCopyError('Clipboard access failed. Select the hash and copy it manually.');
-      }
+    if (!contentHash) return;
+    try {
+      await navigator.clipboard.writeText(contentHash);
+      setCopyError('');
+      setHashCopied(true);
+      setTimeout(() => setHashCopied(false), 2000);
+    } catch {
+      setCopyError('Clipboard access failed. Select the hash and copy it manually.');
     }
   };
 
-  const explorerUrl = CONFIG.blockExplorerUrls[0];
-
   return (
-    <div className="apple-glass rounded-3xl p-6 sm:p-8 space-y-6 transition-all duration-300">
-      
-      {/* Header with Badges */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] pb-4">
-        <div className="flex items-center gap-2">
-          <span className="flex h-2 w-2 rounded-full bg-bot"></span>
-          <h3 className="text-sm font-semibold tracking-tight text-white/90">
-            Generated Campaign Asset
-          </h3>
+    <section className="workspace-card overflow-hidden" style={{ animation: 'workspace-in 420ms cubic-bezier(.16, 1, .3, 1) both' }}>
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b-2 border-[#11110f] bg-[#ffdc35] px-5 py-4 sm:px-6">
+        <div>
+          <div className="mb-1 flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full border border-[#11110f] bg-[#169b63]" />
+            <span className="text-[10px] font-black uppercase tracking-[0.1em]">Campaign ready</span>
+          </div>
+          <h2 className="text-[19px] font-extrabold tracking-[-0.04em]">Here’s the copy you can use.</h2>
         </div>
-        
-        <button
-          onClick={handleCopyText}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.1] text-xs font-medium text-white/80 transition-all active:scale-[0.97]"
-        >
-          {copied ? (
-            <>
-              <svg className="w-3.5 h-3.5 text-[#34C759]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
-              </svg>
-              <span className="text-[#34C759]">Copied</span>
-            </>
-          ) : (
-            <>
-              <svg className="w-3.5 h-3.5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <rect x="9" y="9" width="13" height="13" rx="2" strokeWidth="2" />
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" strokeWidth="2" />
-              </svg>
-              <span>Copy Text</span>
-            </>
-          )}
+        <button type="button" onClick={handleCopyText} className="secondary-button bg-white">
+          <span className="h-4 w-4">{copied ? <CheckIcon /> : <CopyIcon />}</span>
+          {copied ? 'Copied' : 'Copy all'}
         </button>
       </div>
 
-      {source === 'fallback' && <p className="rounded-xl border border-amber-300/20 bg-amber-300/10 px-3 py-2 text-xs text-amber-100">Template fallback active. The LLM provider is unavailable or not configured; this copy was not generated by AI.</p>}
-      {copyError && <p role="alert" className="text-xs text-red-300">{copyError}</p>}
+      <div className="space-y-5 p-5 sm:p-6">
+        {source === 'fallback' && (
+          <div className="rounded-[12px] border-2 border-[#11110f] bg-[#ffe2dc] px-4 py-3 text-[13px] leading-relaxed text-[#6b261e]">
+            <strong>Template fallback active.</strong> The AI provider is unavailable or not configured, so this copy came from the built-in template rather than an LLM.
+          </div>
+        )}
+        {copyError && <p role="alert" className="rounded-[10px] border border-[#c43d35] bg-[#fff0ee] px-3 py-2 text-[12px] text-[#8e2e28]">{copyError}</p>}
 
-      {/* Generated Content Box */}
-      <div className="rounded-2xl bg-black/40 border border-white/[0.06] p-5">
-        <p className="text-sm text-neutral-200 whitespace-pre-wrap leading-relaxed font-normal">
-          {generatedText}
-        </p>
-      </div>
+        <div className="rounded-[15px] border-2 border-[#11110f] bg-[#fbfaf6] p-5 sm:p-6">
+          <p className="whitespace-pre-wrap text-[16px] leading-[1.75] tracking-[-0.015em] text-[#191916]">{generatedText}</p>
+        </div>
 
-      {/* Proof-of-Originality Hash Badge */}
-      {contentHash && (
-        <div className="rounded-2xl bg-white/[0.02] border border-white/[0.06] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-1.5 mb-1">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-white/40">
-                Cryptographic Fingerprint (SHA-256)
-              </span>
-            </div>
-            <div className="font-mono text-xs text-bot/90 break-all select-all">
-              {contentHash}
+        {contentHash && (
+          <div className="rounded-[15px] border-2 border-[#11110f] bg-[#3157d5] p-4 text-white sm:p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.1em] text-white/80">Exact-text fingerprint · SHA-256</p>
+                <p className="mt-2 select-all break-all font-mono text-[12px] leading-relaxed text-white">{contentHash}</p>
+              </div>
+              <button type="button" onClick={handleCopyHash} className="shrink-0 rounded-full border-2 border-[#11110f] bg-white px-4 py-2 text-[12px] font-extrabold text-[#11110f] transition hover:-translate-y-0.5 hover:shadow-[3px_3px_0_#11110f]">
+                {hashCopied ? 'Hash copied' : 'Copy fingerprint'}
+              </button>
             </div>
           </div>
-          <button
-            onClick={handleCopyHash}
-            className="self-end sm:self-center px-2.5 py-1 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-[11px] font-mono text-white/70 transition active:scale-[0.97]"
-          >
-            {hashCopied ? 'Copied' : 'Copy Hash'}
-          </button>
-        </div>
-      )}
+        )}
 
-      {/* Action Section */}
-      <div className="pt-2">
         {!txHash ? (
           <div className="space-y-3">
-            <button
-              onClick={onAnchor}
-              disabled={isAnchoring}
-              className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl bg-bot hover:bg-[#00e8ba] text-black text-sm font-semibold tracking-tight transition-all duration-150 active:scale-[0.98] shadow-lg shadow-bot/20 disabled:opacity-50"
-            >
-              {isAnchoring ? (
-                <>
-                  <svg className="animate-spin h-4 w-4 text-black" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  <span>Confirming on BOT Chain...</span>
-                </>
-              ) : (
-                <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                  <span>Anchor on BOT Chain (Proof of Originality)</span>
-                </>
-              )}
+            <button type="button" onClick={onAnchor} disabled={isAnchoring} className="primary-submit">
+              <span className="h-5 w-5">{isAnchoring ? <span className="block h-full w-full animate-spin rounded-full border-2 border-[#11110f] border-t-transparent" /> : <AnchorIcon />}</span>
+              {isAnchoring ? 'Confirming on BOT Chain…' : 'Make this fingerprint public'}
             </button>
-            <p className="text-center text-[11px] text-white/40">
-              Anchoring stamps this exact campaign hash on-chain with an immutable timestamp.
-            </p>
+            <p className="text-center text-[11px] leading-relaxed text-[#6d6a62]">Optional. Connects your wallet and records this exact hash, category, and platform on BOT Chain.</p>
           </div>
         ) : (
-          <div className="rounded-2xl bg-[#34C759]/10 border border-[#34C759]/20 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#34C759]/20 flex items-center justify-center text-[#34C759]">
-                ✓
-              </div>
+          <div className="rounded-[15px] border-2 border-[#11110f] bg-[#dff8eb] p-4 sm:flex sm:items-center sm:justify-between sm:gap-5">
+            <div className="flex items-start gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 border-[#11110f] bg-[#169b63] text-white">
+                <span className="h-5 w-5"><CheckIcon /></span>
+              </span>
               <div>
-                <h4 className="text-sm font-semibold text-[#34C759]">
-                  Successfully Anchored On-Chain
-                </h4>
-                <p className="text-xs text-white/60 font-mono break-all">
-                  Tx: {txHash.slice(0, 14)}...{txHash.slice(-8)}
-                </p>
+                <h3 className="text-[14px] font-extrabold">Public record confirmed</h3>
+                <p className="mt-1 break-all font-mono text-[11px] text-[#426353]">Transaction: {txHash}</p>
               </div>
             </div>
-            
-            <a
-              href={`${explorerUrl}tx/${txHash}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold tracking-tight transition active:scale-[0.98]"
-            >
-              <span>View on Explorer</span>
-              <span>↗</span>
-            </a>
+            <a href={`${explorerUrl}tx/${txHash}`} target="_blank" rel="noopener noreferrer" className="secondary-button mt-4 shrink-0 sm:mt-0">View transaction</a>
           </div>
         )}
       </div>
-
-    </div>
+    </section>
   );
 }
 
