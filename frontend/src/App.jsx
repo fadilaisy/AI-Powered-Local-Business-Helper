@@ -136,8 +136,8 @@ function App() {
       <header className="sticky top-0 z-50 w-full backdrop-blur-2xl bg-black/60 border-b border-white/[0.08] px-4 py-3.5">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-bot to-[#00A382] flex items-center justify-center shadow-lg shadow-bot/20">
-              <span className="text-black font-extrabold text-sm">PV</span>
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-bot to-[#00A382] flex items-center justify-center shadow-lg shadow-bot/20 overflow-hidden">
+              <img src="/botchain-logo.svg" alt="BOT Chain" className="w-8 h-8" />
             </div>
             <div>
               <span className="font-semibold text-sm tracking-tight text-white flex items-center gap-1.5">
@@ -150,6 +150,16 @@ function App() {
           </div>
 
           <div className="flex items-center gap-2.5">
+            <a
+              href={CONFIG.contractExplorerUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={`View verified contract on ${CONFIG.chainName} explorer`}
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-xs font-medium text-white/80 transition-all active:scale-[0.98]"
+            >
+              <span>Contract</span>
+              <span className="text-[10px]">↗</span>
+            </a>
             <NetworkSelector />
             <ConnectWallet onConnect={handleWalletConnect} onDisconnect={handleWalletDisconnect} address={address} />
           </div>

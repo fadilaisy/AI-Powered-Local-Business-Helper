@@ -8,9 +8,7 @@ function Footer() {
         
         {/* Brand & Purpose */}
         <div className="flex items-center gap-3">
-          <div className="w-6 h-6 rounded-lg bg-bot/20 border border-bot/30 flex items-center justify-center text-bot font-bold text-xs">
-            P
-          </div>
+          <img src="/botchain-logo.svg" alt="BOT Chain" className="w-6 h-6 rounded-lg" />
           <div>
             <span className="font-semibold text-white/80">PromoVault</span>
             <span className="mx-2">·</span>
@@ -31,12 +29,13 @@ function Footer() {
           </a>
           <span className="text-white/20">|</span>
           <a
-            href={CONFIG.blockExplorerUrls[0]}
+            href={CONFIG.contractExplorerUrl}
             target="_blank"
             rel="noopener noreferrer"
+            title={`View verified contract on ${CONFIG.chainName} explorer`}
             className="hover:text-bot transition-colors flex items-center gap-1"
           >
-            <span>BOT Explorer</span>
+            <span>View Contract</span>
             <span className="text-[10px]">↗</span>
           </a>
           <span className="text-white/20">|</span>
