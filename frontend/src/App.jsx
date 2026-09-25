@@ -6,6 +6,7 @@ import MyCampaigns from './components/MyCampaigns';
 import VerifyCampaign from './components/VerifyCampaign';
 import Footer from './components/Footer';
 import ThemeToggle from './components/ThemeToggle';
+import BotChainLogo from './components/BotChainLogo';
 import { getContract } from './lib/contract';
 import { CONFIG } from './lib/config';
 
@@ -29,15 +30,6 @@ const TAB_COPY = {
     description: 'Paste the exact campaign text or its 32-byte fingerprint. PromoVault reads the public BOT Chain record directly and tells you what exists.'
   }
 };
-
-function SparkIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 2l1.55 6.45L20 10l-6.45 1.55L12 18l-1.55-6.45L4 10l6.45-1.55L12 2z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-      <path d="M19 16l.7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16z" fill="currentColor" />
-    </svg>
-  );
-}
 
 function ArrowIcon() {
   return (
@@ -211,7 +203,7 @@ function App() {
       <header className="app-header">
         <div className="app-header-inner">
           <a className="promo-brand" href="#top" aria-label="PromoVault home">
-            <span className="promo-brand-mark"><SparkIcon /></span>
+            <span className="promo-brand-mark"><BotChainLogo className="h-5 w-5" /></span>
             <span className="promo-brand-name">PromoVault</span>
           </a>
 
@@ -230,6 +222,15 @@ function App() {
           </nav>
 
           <div className="header-actions">
+            <a
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[color:var(--border,#d8d6cf)] px-3 text-[12px] font-bold transition hover:-translate-y-0.5"
+              href={CONFIG.contractExplorerUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={`View verified contract on ${CONFIG.chainName} explorer`}
+            >
+              Contract ↗
+            </a>
             <ThemeToggle theme={theme} onToggle={handleThemeToggle} />
             <ConnectWallet onConnect={handleWalletConnect} onDisconnect={handleWalletDisconnect} address={address} />
           </div>

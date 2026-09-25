@@ -23,8 +23,8 @@ function Footer() {
             <BotChainLogo className="h-5 w-5" />
             Built on BOT Chain
           </a>
-          <a className="rounded-full border-2 border-[#11110f] bg-white px-4 py-2.5 transition hover:-translate-y-0.5 hover:bg-[#f1f0eb] hover:shadow-[3px_3px_0_#11110f]" href={CONFIG.blockExplorerUrls[0]} target="_blank" rel="noopener noreferrer">
-            BOT Explorer
+          <a className="rounded-full border-2 border-[#11110f] bg-white px-4 py-2.5 transition hover:-translate-y-0.5 hover:bg-[#f1f0eb] hover:shadow-[3px_3px_0_#11110f]" href={CONFIG.contractExplorerUrl} target="_blank" rel="noopener noreferrer" title={`View verified contract on ${CONFIG.chainName} explorer`}>
+            View Contract
           </a>
           <span className="rounded-full border border-[#aaa79e] px-3 py-2 text-[#5f5d57]">Build Week Vol. 2</span>
         </div>
