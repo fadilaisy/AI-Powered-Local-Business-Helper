@@ -71,7 +71,7 @@ function GeneratedCopy({ generatedText, contentHash, onAnchor, isAnchoring, txHa
 
       {/* Generated Content Box */}
       <div className="rounded-2xl bg-black/40 border border-white/[0.06] p-5">
-        <p className="text-sm text-neutral-200 whitespace-pre-wrap leading-relaxed font-normal">
+        <p className="text-sm !text-white whitespace-pre-wrap leading-relaxed font-normal [&_*]:!text-white">
           {generatedText}
         </p>
       </div>

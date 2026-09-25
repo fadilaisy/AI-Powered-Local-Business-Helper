@@ -30,10 +30,16 @@ const getInitialNetwork = () => {
 
 export const ACTIVE_NETWORK = getInitialNetwork();
 
+const activeNet = NETWORKS[ACTIVE_NETWORK];
+const explorerBase = activeNet.blockExplorerUrls[0].replace(/\/+$/, '');
+
 export const CONFIG = {
-  ...NETWORKS[ACTIVE_NETWORK],
+  ...activeNet,
   NETWORK: ACTIVE_NETWORK,
-  API_URL: import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : 'https://ai-powered-local-business-helper.vercel.app')
+  API_URL: import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : 'https://ai-powered-local-business-helper.vercel.app'),
+  // Deep link straight to the deployed contract on the ACTIVE network's explorer
+  // (mainnet -> scan.botchain.ai, testnet -> scan.bohr.life). Never the explorer home page.
+  contractExplorerUrl: `${explorerBase}/address/${activeNet.contractAddress}`
 };
 
 export const switchNetworkConfig = (targetNetwork) => {
