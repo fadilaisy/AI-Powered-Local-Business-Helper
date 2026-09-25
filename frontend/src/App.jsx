@@ -1,13 +1,56 @@
 import React, { useEffect, useState } from 'react';
 import ConnectWallet from './components/ConnectWallet';
-import NetworkSelector from './components/NetworkSelector';
 import PromptForm from './components/PromptForm';
 import GeneratedCopy from './components/GeneratedCopy';
 import MyCampaigns from './components/MyCampaigns';
 import VerifyCampaign from './components/VerifyCampaign';
 import Footer from './components/Footer';
+import ThemeToggle from './components/ThemeToggle';
+import BotChainLogo from './components/BotChainLogo';
 import { getContract } from './lib/contract';
 import { CONFIG } from './lib/config';
+
+const TABS = [
+  { id: 'Generate', label: 'Create' },
+  { id: 'My Campaigns', label: 'My vault' },
+  { id: 'Verify', label: 'Verify' }
+];
+
+const TAB_COPY = {
+  Generate: {
+    title: <>Your idea. <span>Ready to publish.</span></>,
+    description: 'Turn a plain-language promotion into platform-ready copy, then keep a public timestamp for the exact words you choose to publish.'
+  },
+  'My Campaigns': {
+    title: <>Your best work, <span>made permanent.</span></>,
+    description: 'Open the campaigns already anchored by your connected wallet. Each record stores a fingerprint, metadata, owner, and first submission time.'
+  },
+  Verify: {
+    title: <>Check the record. <span>No wallet needed.</span></>,
+    description: 'Paste the exact campaign text or its 32-byte fingerprint. PromoVault reads the public BOT Chain record directly and tells you what exists.'
+  }
+};
+
+function ArrowIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M5 12h14M14 7l5 5-5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function FlowIcon({ type }) {
+  if (type === 'brief') {
+    return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+  }
+  if (type === 'copy') {
+    return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 7V4h12v12h-3M4 8h12v12H4z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>;
+  }
+  if (type === 'hash') {
+    return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 3L7 21M17 3l-2 18M4 8h16M3 16h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>;
+  }
+  return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l8 4v5c0 4.5-3.1 7.8-8 9-4.9-1.2-8-4.5-8-9V7l8-4zM9 12l2 2 4-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+}
 
 function App() {
   const [address, setAddress] = useState(null);
@@ -15,7 +58,6 @@ function App() {
   const [provider, setProvider] = useState(null);
   const [contract, setContract] = useState(null);
   const [activeTab, setActiveTab] = useState('Generate');
-
   const [generatedText, setGeneratedText] = useState(null);
   const [contentHash, setContentHash] = useState(null);
   const [lastCategory, setLastCategory] = useState('General');
@@ -24,21 +66,35 @@ function App() {
   const [isAnchoring, setIsAnchoring] = useState(false);
   const [txHash, setTxHash] = useState(null);
   const [generationSource, setGenerationSource] = useState('ai');
+  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme || 'light');
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleSystemTheme = (event) => {
+      if (localStorage.getItem('promovault.theme')) return;
+      const nextTheme = event.matches ? 'dark' : 'light';
+      document.documentElement.dataset.theme = nextTheme;
+      document.documentElement.style.colorScheme = nextTheme;
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', nextTheme === 'dark' ? '#11110f' : '#f7f7f3');
+      setTheme(nextTheme);
+    };
+    media.addEventListener('change', handleSystemTheme);
+    return () => media.removeEventListener('change', handleSystemTheme);
+  }, []);
 
   useEffect(() => {
     const stored = localStorage.getItem('promovault.generated');
-    if (stored) {
-      try {
-        const campaign = JSON.parse(stored);
-        setGeneratedText(campaign.text);
-        setContentHash(campaign.contentHash);
-        setLastCategory(campaign.category || 'general');
-        setLastPlatform(campaign.platform || 'instagram');
-        setTxHash(campaign.txHash || null);
-        setGenerationSource(campaign.source || 'fallback');
-      } catch {
-        localStorage.removeItem('promovault.generated');
-      }
+    if (!stored) return;
+    try {
+      const campaign = JSON.parse(stored);
+      setGeneratedText(campaign.text);
+      setContentHash(campaign.contentHash);
+      setLastCategory(campaign.category || 'general');
+      setLastPlatform(campaign.platform || 'instagram');
+      setTxHash(campaign.txHash || null);
+      setGenerationSource(campaign.source || 'fallback');
+    } catch {
+      localStorage.removeItem('promovault.generated');
     }
   }, []);
 
@@ -56,6 +112,23 @@ function App() {
     setContract(null);
   };
 
+  const handleThemeToggle = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    const applyTheme = () => {
+      document.documentElement.dataset.theme = nextTheme;
+      document.documentElement.style.colorScheme = nextTheme;
+      localStorage.setItem('promovault.theme', nextTheme);
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', nextTheme === 'dark' ? '#11110f' : '#f7f7f3');
+      setTheme(nextTheme);
+    };
+
+    if (document.startViewTransition && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.startViewTransition(applyTheme);
+    } else {
+      applyTheme();
+    }
+  };
+
   const saveGeneratedCampaign = (campaign) => {
     localStorage.setItem('promovault.generated', JSON.stringify(campaign));
   };
@@ -70,17 +143,17 @@ function App() {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 15000);
       try {
-        const res = await fetch(`${CONFIG.API_URL}/api/generate`, {
+        const response = await fetch(`${CONFIG.API_URL}/api/generate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           signal: controller.signal,
           body: JSON.stringify({ prompt, businessCategory, platform })
         });
-        if (!res.ok) {
-          const errJson = await res.json().catch(() => ({}));
-          throw new Error(errJson.error?.message || errJson.error || `Server returned ${res.status}`);
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({}));
+          throw new Error(error.error?.message || error.error || `Server returned ${response.status}`);
         }
-        const data = await res.json();
+        const data = await response.json();
         setGeneratedText(data.text);
         setContentHash(data.contentHash);
         setLastCategory(businessCategory);
@@ -90,9 +163,9 @@ function App() {
       } finally {
         clearTimeout(timeout);
       }
-    } catch (err) {
-      const message = err.name === 'AbortError' ? 'The request took too long. Please try again.' : err.message || 'Please check your connection.';
-      alert(`Failed to generate copy: ${message}`);
+    } catch (error) {
+      const message = error.name === 'AbortError' ? 'The request took too long. Please try again.' : error.message || 'Please check your connection.';
+      window.alert(`Failed to generate copy: ${message}`);
     } finally {
       setIsGenerating(false);
     }
@@ -100,7 +173,7 @@ function App() {
 
   const handleAnchor = async () => {
     if (!contract || !contentHash) {
-      alert("Please connect your wallet first.");
+      window.alert('Please connect your wallet first.');
       return;
     }
     setIsAnchoring(true);
@@ -108,141 +181,120 @@ function App() {
     try {
       const [exists] = await contract.verifyCampaign(contentHash);
       if (exists) {
-        alert('This exact campaign hash is already registered on BOT Chain.');
+        window.alert('This exact campaign hash is already registered on BOT Chain.');
         return;
       }
-      const tx = await contract.registerCampaign(contentHash, lastCategory, lastPlatform);
-      await tx.wait();
-      setTxHash(tx.hash);
-      saveGeneratedCampaign({ text: generatedText, contentHash, category: lastCategory, platform: lastPlatform, source: generationSource, txHash: tx.hash });
-    } catch (err) {
-      console.error(err);
-      alert('Failed to anchor on chain. Check your BOT balance or network.');
+      const transaction = await contract.registerCampaign(contentHash, lastCategory, lastPlatform);
+      await transaction.wait();
+      setTxHash(transaction.hash);
+      saveGeneratedCampaign({ text: generatedText, contentHash, category: lastCategory, platform: lastPlatform, source: generationSource, txHash: transaction.hash });
+    } catch (error) {
+      console.error(error);
+      window.alert('Failed to anchor on chain. Check your BOT balance or network.');
     } finally {
       setIsAnchoring(false);
     }
   };
 
-  const TABS = [
-    { id: 'Generate', label: 'Generate', icon: '✨' },
-    { id: 'My Campaigns', label: 'My Vault', icon: '🗂️' },
-    { id: 'Verify', label: 'Verify Authenticity', icon: '🛡️' }
-  ];
+  const activeCopy = TAB_COPY[activeTab];
 
   return (
-    <div className="min-h-screen flex flex-col items-center">
-      
-      {/* Apple-style Frosted Navigation Bar */}
-      <header className="sticky top-0 z-50 w-full backdrop-blur-2xl bg-black/60 border-b border-white/[0.08] px-4 py-3.5">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-black flex items-center justify-center shadow-lg shadow-bot/20 overflow-hidden border border-white/10">
-              <img src="/botchain-logo.svg" alt="BOT Chain" className="w-8 h-8" />
-            </div>
-            <div>
-              <span className="font-semibold text-sm tracking-tight text-white flex items-center gap-1.5">
-                PromoVault
-                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/[0.08] text-bot border border-bot/20">
-                  AI + BOT Chain
-                </span>
-              </span>
-            </div>
-          </div>
+    <div className="app-shell">
+      <header className="app-header">
+        <div className="app-header-inner">
+          <a className="promo-brand" href="#top" aria-label="PromoVault home">
+            <span className="promo-brand-mark"><BotChainLogo className="h-5 w-5" /></span>
+            <span className="promo-brand-name">PromoVault</span>
+          </a>
 
-          <div className="flex items-center gap-2.5">
+          <nav className="primary-nav" aria-label="PromoVault sections">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                className={activeTab === tab.id ? 'primary-nav-item is-active' : 'primary-nav-item'}
+                aria-pressed={activeTab === tab.id}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+
+          <div className="header-actions">
             <a
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[color:var(--border,#d8d6cf)] px-3 text-[12px] font-bold transition hover:-translate-y-0.5"
               href={CONFIG.contractExplorerUrl}
               target="_blank"
               rel="noopener noreferrer"
               title={`View verified contract on ${CONFIG.chainName} explorer`}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-xs font-medium text-white/80 transition-all active:scale-[0.98]"
             >
-              <span>Contract</span>
-              <span className="text-[10px]">↗</span>
+              Contract ↗
             </a>
-            <NetworkSelector />
+            <ThemeToggle theme={theme} onToggle={handleThemeToggle} />
             <ConnectWallet onConnect={handleWalletConnect} onDisconnect={handleWalletDisconnect} address={address} />
           </div>
         </div>
       </header>
 
-      {/* Main Content Arena */}
-      <main className="w-full max-w-4xl flex-grow px-4 pt-12 pb-20 space-y-10">
-        
-        {/* Apple Product-Style Hero */}
-        <section className="text-center space-y-4 max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-[11px] font-medium text-white/70">
-            <span className="w-1.5 h-1.5 rounded-full bg-bot"></span>
-            <span>Proof of Originality for Small Business Marketing</span>
-          </div>
-          
-          <h1 className="text-3xl sm:text-5xl font-semibold tracking-tight text-white leading-[1.12]">
-            Generate Campaign Copy. <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white/90 to-white/60">
-              Anchor It On-Chain.
-            </span>
-          </h1>
-          
-          <p className="text-sm sm:text-base text-white/50 leading-relaxed max-w-lg mx-auto font-normal">
-            Create high-converting copy in seconds, then anchor the SHA-256 fingerprint on BOT Chain so you hold cryptographic proof of your creative work.
-          </p>
-
-          {/* Segmented Floating Pill Switcher */}
-          <div className="pt-4 flex justify-center">
-            <div className="inline-flex p-1 rounded-full bg-white/[0.05] border border-white/[0.08] backdrop-blur-xl">
-              {TABS.map((tab) => {
-                const active = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 px-5 py-2 rounded-full text-xs font-medium transition-all duration-150 active:scale-[0.97] ${
-                      active
-                        ? 'bg-white text-black font-semibold shadow-md'
-                        : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
-                    }`}
-                  >
-                    <span>{tab.icon}</span>
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
+      <main id="top" className="app-main">
+        <section className="product-hero">
+          <div className="hero-copy">
+            <p className="product-promise"><span /> AI copy. Public proof.</p>
+            <h1>{activeCopy.title}</h1>
+            <p className="hero-description">{activeCopy.description}</p>
+            <div className="hero-actions">
+              <button className="primary-action" type="button" onClick={() => setActiveTab('Generate')}>
+                Create a campaign <ArrowIcon />
+              </button>
+              <button className="text-action" type="button" onClick={() => setActiveTab('Verify')}>
+                Verify a record
+              </button>
             </div>
+          </div>
+
+          <div className="workspace-wrap" key={activeTab}>
+            {activeTab === 'Generate' && (
+              <div className="workspace generate-workspace">
+                <PromptForm onGenerate={handleGenerate} isLoading={isGenerating} />
+                {generatedText && (
+                  <GeneratedCopy
+                    generatedText={generatedText}
+                    contentHash={contentHash}
+                    onAnchor={handleAnchor}
+                    isAnchoring={isAnchoring}
+                    txHash={txHash}
+                    source={generationSource}
+                  />
+                )}
+              </div>
+            )}
+            {activeTab === 'My Campaigns' && <MyCampaigns contract={contract} address={address} />}
+            {activeTab === 'Verify' && <VerifyCampaign />}
           </div>
         </section>
 
-        {/* Tab Content Display */}
-        <section className="max-w-2xl mx-auto">
-          {activeTab === 'Generate' && (
-            <div className="space-y-6 animate-fadeIn">
-              <PromptForm onGenerate={handleGenerate} isLoading={isGenerating} />
-              
-              {generatedText && (
-                <GeneratedCopy
-                  generatedText={generatedText}
-                  contentHash={contentHash}
-                  onAnchor={handleAnchor}
-                  isAnchoring={isAnchoring}
-                  txHash={txHash}
-                  source={generationSource}
-                />
-              )}
-            </div>
-          )}
-
-          {activeTab === 'My Campaigns' && (
-            <div className="animate-fadeIn">
-              <MyCampaigns contract={contract} address={address} />
-            </div>
-          )}
-
-          {activeTab === 'Verify' && (
-            <div className="animate-fadeIn">
-              <VerifyCampaign />
-            </div>
-          )}
+        <section className="proof-rail" aria-label="How PromoVault works">
+          <div className="flow-item">
+            <span className="flow-icon"><FlowIcon type="brief" /></span>
+            <div><span>Describe</span><strong>Your promotion</strong></div>
+          </div>
+          <div className="flow-line" />
+          <div className="flow-item">
+            <span className="flow-icon"><FlowIcon type="copy" /></span>
+            <div><span>Generate</span><strong>Platform-ready copy</strong></div>
+          </div>
+          <div className="flow-line" />
+          <div className="flow-item">
+            <span className="flow-icon"><FlowIcon type="hash" /></span>
+            <div><span>Fingerprint</span><strong>The exact text</strong></div>
+          </div>
+          <div className="flow-line" />
+          <div className="flow-item">
+            <span className="flow-icon"><FlowIcon type="record" /></span>
+            <div><span>Optionally</span><strong>Make it public</strong></div>
+          </div>
         </section>
-
       </main>
 
       <Footer />

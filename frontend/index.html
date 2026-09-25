@@ -2,13 +2,24 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Generate platform-ready local business marketing copy and anchor its public hash timestamp on BOT Chain." />
-    <meta name="theme-color" content="#050505" />
-    <title>PromoVault — AI Marketing on BOT Chain</title>
+    <meta name="theme-color" content="#f7f7f3" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
+    <title>PromoVault — AI Marketing Copy with Public Proof</title>
   </head>
   <body>
+    <script>
+      (() => {
+        const stored = localStorage.getItem('promovault.theme');
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = stored || (systemDark ? 'dark' : 'light');
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
