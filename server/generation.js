@@ -93,11 +93,19 @@ function providerSettings() {
   if (!['gemini', 'openai'].includes(provider)) {
     throw new Error(`Unsupported LLM_PROVIDER: ${provider}`);
   }
+
+  let model = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
+  if (provider === 'gemini') {
+    if (model.includes('2.0') || model.includes('1.5') || model.includes('2.5')) {
+      model = 'gemini-3.6-flash';
+    }
+  } else if (provider === 'openai') {
+    model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+  }
+
   return {
     provider,
-    model: provider === 'gemini'
-      ? process.env.GEMINI_MODEL || 'gemini-3.6-flash'
-      : process.env.OPENAI_MODEL || 'gpt-4o-mini',
+    model,
     configured: Boolean(provider === 'gemini' ? process.env.GEMINI_API_KEY : process.env.OPENAI_API_KEY)
   };
 }
@@ -141,7 +149,7 @@ async function callProvider(systemPrompt, userPrompt) {
     return { text, source: settings.provider, model: settings.model };
   } catch (error) {
     console.warn('LLM provider failed, using fallback:', error.message);
-    return { text: null, source: 'fallback', reason: 'provider_error' };
+    return { text: null, source: 'fallback', reason: 'provider_error', error: error.message };
   }
 }
 
@@ -182,6 +190,7 @@ async function generate(body) {
       platform: request.platform,
       source: provider.source,
       degraded: provider.source === 'fallback',
+      ...(provider.error ? { providerError: provider.error } : {}),
       timestamp: new Date().toISOString()
     }
   };
