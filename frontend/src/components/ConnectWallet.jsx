@@ -22,7 +22,18 @@ function ConnectWallet({ onConnect, onDisconnect, address }) {
       if (accounts.length === 0) onDisconnect();
       else connect();
     };
-    const handleChainChanged = () => onDisconnect();
+    const handleChainChanged = (chainIdHex) => {
+      const chainIdNum = typeof chainIdHex === 'string' ? Number.parseInt(chainIdHex, 16) : Number(chainIdHex);
+      if (chainIdNum === 677 && CONFIG.NETWORK !== 'MAINNET') {
+        localStorage.setItem('promovault_network', 'MAINNET');
+        window.location.reload();
+      } else if (chainIdNum === 968 && CONFIG.NETWORK !== 'TESTNET') {
+        localStorage.setItem('promovault_network', 'TESTNET');
+        window.location.reload();
+      } else {
+        onDisconnect();
+      }
+    };
     window.ethereum.on('accountsChanged', handleAccountsChanged);
     window.ethereum.on('chainChanged', handleChainChanged);
     return () => {
