@@ -83,20 +83,20 @@ function ConnectWallet({ onConnect, onDisconnect, address }) {
   return (
     <div className="relative flex items-center gap-2">
       {address ? (
-        <button type="button" onClick={copyAddress} title="Click to copy wallet address" className="group inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-[#11110f] bg-white px-3.5 py-2 text-left transition hover:-translate-y-0.5 hover:bg-[#f1f0eb] hover:shadow-[3px_3px_0_#11110f]">
-          <span className="h-4 w-4 text-[#3157d5]"><WalletIcon /></span>
+        <button type="button" onClick={copyAddress} title="Click to copy wallet address" className="group inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-line bg-surface px-3.5 py-2 text-left transition hover:-translate-y-0.5 hover:bg-surface-soft hover:shadow-pop">
+          <span className="h-4 w-4 text-brand-text"><WalletIcon /></span>
           <span className="font-mono text-[11px] font-bold">{address.slice(0, 6)}…{address.slice(-4)}</span>
-          <span className="border-l border-[#c6c3ba] pl-2 text-[10px] font-black uppercase tracking-[0.06em] text-[#6d6a62]">{CONFIG.NETWORK}</span>
+          <span className="border-l border-line-soft pl-2 text-[10px] font-black uppercase tracking-[0.06em] text-muted">{CONFIG.NETWORK}</span>
         </button>
       ) : (
-        <button type="button" onClick={connect} disabled={connecting} className="inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-[#11110f] bg-[#3157d5] px-4 py-2 text-[12px] font-extrabold text-white transition hover:-translate-y-0.5 hover:bg-[#2447c4] hover:shadow-[3px_3px_0_#11110f] disabled:cursor-not-allowed disabled:opacity-60">
+        <button type="button" onClick={connect} disabled={connecting} className="inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-line bg-brand px-4 py-2 text-[12px] font-extrabold text-on-brand transition hover:-translate-y-0.5 hover:bg-brand-hover hover:shadow-pop disabled:cursor-not-allowed disabled:opacity-60">
           <span className="h-4 w-4"><WalletIcon /></span>
           {connecting ? 'Connecting…' : 'Connect wallet'}
         </button>
       )}
       {error && <span role="alert" className="sr-only">{error}</span>}
       {error && (
-        <div role="alert" className="fixed right-4 top-[88px] z-[60] max-w-sm rounded-[12px] border-2 border-[#11110f] bg-[#fff0ee] p-3 text-xs text-[#8e2e28] shadow-[5px_5px_0_#11110f]">
+        <div role="alert" className="fixed right-4 top-[88px] z-[60] max-w-sm rounded-[12px] border-2 border-line bg-danger-soft p-3 text-xs text-danger-ink shadow-pop">
           {error}<button type="button" className="ml-2 underline" onClick={() => setError('')}>Dismiss</button>
         </div>
       )}

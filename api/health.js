@@ -1,3 +1,4 @@
+require('../server/env');
 const { healthSnapshot } = require('../server/generation');
 
 function applyCors(req, res) {

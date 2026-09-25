@@ -33,10 +33,17 @@ export const ACTIVE_NETWORK = getInitialNetwork();
 const activeNet = NETWORKS[ACTIVE_NETWORK];
 const explorerBase = activeNet.blockExplorerUrls[0].replace(/\/+$/, '');
 
+// API base. In dev the Vite proxy forwards /api to the local Express server, so
+// the base is '' unless VITE_API_URL is set explicitly. This keys off
+// import.meta.env.DEV, which Vite derives from NODE_ENV: a shell that exports
+// NODE_ENV=production makes `npm run dev` behave like a production build and
+// silently point the dev server at the deployed API instead of local code.
+const DEV_API_URL = import.meta.env.DEV ? '' : 'https://ai-powered-local-business-helper.vercel.app';
+
 export const CONFIG = {
   ...activeNet,
   NETWORK: ACTIVE_NETWORK,
-  API_URL: import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : 'https://ai-powered-local-business-helper.vercel.app'),
+  API_URL: import.meta.env.VITE_API_URL ?? DEV_API_URL,
   // Deep link straight to the deployed contract on the ACTIVE network's explorer
   // (mainnet -> scan.botchain.ai, testnet -> scan.bohr.life). Never the explorer home page.
   contractExplorerUrl: `${explorerBase}/address/${activeNet.contractAddress}`

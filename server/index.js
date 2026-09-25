@@ -1,6 +1,11 @@
-require('dotenv').config();
+// Loads server/.env relative to this file so the working directory does not
+// matter; real environment variables still win.
+require('./env');
+
 const express = require('express');
-const { allowRequest, generate, healthSnapshot, RATE_LIMIT_MAX_REQUESTS } = require('./generation');
+const { allowRequest, generate, healthSnapshot, providerSettings, RATE_LIMIT_MAX_REQUESTS } = require('./generation');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -37,10 +42,6 @@ app.post('/api/generate', async (req, res) => {
   }
 });
 
-const path = require('path');
-const fs = require('fs');
-
-
 const distPath = path.join(__dirname, '../frontend/dist');
 if (fs.existsSync(distPath)) {
   app.use(express.static(distPath));
@@ -51,6 +52,13 @@ app.get('/', (req, res) => {
   if (fs.existsSync(indexHtml)) {
     return res.sendFile(indexHtml);
   }
+  // Report the model actually in use rather than a hardcoded name, so this page
+  // cannot claim a provider that is unconfigured or overridden via env.
+  const settings = providerSettings();
+  const providerLabel = settings.provider === 'gemini' ? 'Gemini' : 'OpenAI';
+  const statusLine = settings.configured
+    ? `${providerLabel} (${settings.model}) and BOT Chain hashing endpoints are running.`
+    : `Template fallback is active. Set ${settings.provider === 'gemini' ? 'GEMINI_API_KEY' : 'OPENAI_API_KEY'} in server/.env to enable ${providerLabel} (${settings.model}).`;
   res.status(200).send(`
     <!DOCTYPE html>
     <html lang="en">
@@ -72,7 +80,7 @@ app.get('/', (req, res) => {
       <div class="card">
         <div class="badge"><span class="dot"></span>PromoVault Backend Live</div>
         <h1>API Service Operational</h1>
-        <p>Gemini 3.6 Flash & BOT Chain hashing endpoints are running.</p>
+        <p>${statusLine}</p>
         <a class="link" href="/api/health">Check /api/health →</a>
       </div>
     </body>
@@ -80,9 +88,10 @@ app.get('/', (req, res) => {
   `);
 });
 
-app.get('*', (req, res, next) => {
+app.get('*', (req, res) => {
   if (req.path.startsWith('/api')) {
-    return next();
+    // Unknown API routes must answer JSON, not fall through to Express's HTML 404.
+    return res.status(404).json({ error: { code: 'not_found', message: `No API route matches ${req.method} ${req.path}` } });
   }
   const indexHtml = path.join(__dirname, '../frontend/dist/index.html');
   if (fs.existsSync(indexHtml)) {
