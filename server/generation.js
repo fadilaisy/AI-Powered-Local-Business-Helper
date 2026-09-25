@@ -96,7 +96,7 @@ function providerSettings() {
   return {
     provider,
     model: provider === 'gemini'
-      ? process.env.GEMINI_MODEL || 'gemini-2.0-flash'
+      ? process.env.GEMINI_MODEL || 'gemini-3.6-flash'
       : process.env.OPENAI_MODEL || 'gpt-4o-mini',
     configured: Boolean(provider === 'gemini' ? process.env.GEMINI_API_KEY : process.env.OPENAI_API_KEY)
   };
