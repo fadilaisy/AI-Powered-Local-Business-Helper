@@ -61,12 +61,12 @@ Frontend variables:
 
 ## Contract addresses
 
-| Network | Chain ID | Contract |
-|---|---:|---|
-| BOT Chain Testnet | 968 | `0xdc8B6e56E92C4a5ff327F9d21425b76bdb8Bb800` |
-| BOT Chain Mainnet | 677 | '0xe25bD38d596c79Fb168d5Fd95CdEdB7af9C6adDF' |
+| Network | Chain ID | Contract Address | Explorer |
+|---|---:|---|---|
+| BOT Chain Mainnet | 677 | [`0xe25bD38d596c79Fb168d5Fd95CdEdB7af9C6adDF`](https://scan.botchain.ai/address/0xe25bD38d596c79Fb168d5Fd95CdEdB7af9C6adDF) | [scan.botchain.ai](https://scan.botchain.ai/) |
+| BOT Chain Testnet | 968 | [`0xdc8B6e56E92C4a5ff327F9d21425b76bdb8Bb800`](https://scan.bohr.life/address/0xdc8B6e56E92C4a5ff327F9d21425b76bdb8Bb800) | [scan.bohr.life](https://scan.bohr.life/) |
 
-The default deployment is testnet. Testnet records are not production evidence.
+The application supports both networks seamlessly with an in-app network switcher in the header. The default active network is **BOT Chain Mainnet**.
 
 ## Validation
 

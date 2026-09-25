@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import ConnectWallet from './components/ConnectWallet';
+import NetworkSelector from './components/NetworkSelector';
 import PromptForm from './components/PromptForm';
 import GeneratedCopy from './components/GeneratedCopy';
 import MyCampaigns from './components/MyCampaigns';
@@ -148,7 +149,10 @@ function App() {
             </div>
           </div>
 
-           <ConnectWallet onConnect={handleWalletConnect} onDisconnect={handleWalletDisconnect} address={address} />
+          <div className="flex items-center gap-2.5">
+            <NetworkSelector />
+            <ConnectWallet onConnect={handleWalletConnect} onDisconnect={handleWalletDisconnect} address={address} />
+          </div>
         </div>
       </header>
 
