@@ -120,9 +120,12 @@ async function callProvider(systemPrompt, userPrompt) {
     if (settings.provider === 'gemini') {
       const { GoogleGenerativeAI } = require('@google/generative-ai');
       const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-      const model = genAI.getGenerativeModel({ model: settings.model });
+      const model = genAI.getGenerativeModel({
+        model: settings.model,
+        systemInstruction: systemPrompt
+      });
       const result = await Promise.race([
-        model.generateContent([{ role: 'user', parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }]),
+        model.generateContent(userPrompt),
         new Promise((_, reject) => setTimeout(() => reject(new Error('Provider request timed out')), PROVIDER_TIMEOUT_MS))
       ]);
       const text = result.response.text();
