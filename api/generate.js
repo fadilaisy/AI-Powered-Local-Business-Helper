@@ -1,12 +1,17 @@
+require('../server/env');
 const { allowRequest, generate, healthSnapshot, RATE_LIMIT_MAX_REQUESTS } = require('../server/generation');
 
 function applyCors(req, res) {
   const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map((origin) => origin.trim()).filter(Boolean);
   const origin = req.headers.origin;
-  const allowOrigin = allowedOrigins.length > 0
-    ? (origin && allowedOrigins.includes(origin) ? origin : allowedOrigins[0])
-    : '*';
-  res.setHeader('Access-Control-Allow-Origin', allowOrigin);
+  // Never reflect a disallowed origin. The serverless handler previously fell
+  // back to allowedOrigins[0], which handed a disallowed caller the header of
+  // an allowed site and diverged from the Express behaviour.
+  if (allowedOrigins.length === 0) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  } else if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');

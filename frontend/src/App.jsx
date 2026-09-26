@@ -9,6 +9,14 @@ import ThemeToggle from './components/ThemeToggle';
 import BotChainLogo from './components/BotChainLogo';
 import { getContract } from './lib/contract';
 import { CONFIG } from './lib/config';
+import History from './components/History';
+import {
+  addToHistory,
+  getCurrentCampaign,
+  loadHistory,
+  markAnchored,
+  upsertInHistory
+} from './lib/history';
 
 const TABS = [
   { id: 'Generate', label: 'Create' },
@@ -62,11 +70,15 @@ function App() {
   const [contentHash, setContentHash] = useState(null);
   const [lastCategory, setLastCategory] = useState('General');
   const [lastPlatform, setLastPlatform] = useState('Instagram');
+  const [lastPlatformLabel, setLastPlatformLabel] = useState('Instagram');
+  const [lastPrompt, setLastPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAnchoring, setIsAnchoring] = useState(false);
   const [txHash, setTxHash] = useState(null);
   const [generationSource, setGenerationSource] = useState('ai');
+  const [degradedReason, setDegradedReason] = useState(null);
   const [theme, setTheme] = useState(() => document.documentElement.dataset.theme || 'light');
+  const [history, setHistory] = useState(() => loadHistory());
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-color-scheme: dark)');
@@ -83,20 +95,55 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const stored = localStorage.getItem('promovault.generated');
+    // Seed the history from the single-campaign key on first load so users who
+    // generated before history existed keep their work.
+    const stored = getCurrentCampaign();
     if (!stored) return;
-    try {
-      const campaign = JSON.parse(stored);
-      setGeneratedText(campaign.text);
-      setContentHash(campaign.contentHash);
-      setLastCategory(campaign.category || 'general');
-      setLastPlatform(campaign.platform || 'instagram');
-      setTxHash(campaign.txHash || null);
-      setGenerationSource(campaign.source || 'fallback');
-    } catch {
-      localStorage.removeItem('promovault.generated');
-    }
+    setGeneratedText(stored.text);
+    setContentHash(stored.contentHash);
+    setLastCategory(stored.category || 'general');
+    setLastPlatform(stored.platform || 'instagram');
+    setLastPlatformLabel(stored.platformLabel || null);
+    setLastPrompt(stored.prompt || '');
+    setTxHash(stored.txHash || null);
+    setGenerationSource(stored.source || 'fallback');
+    setDegradedReason(stored.degradedReason || null);
+    setHistory(addToHistory({ ...stored, createdAt: stored.createdAt }));
   }, []);
+
+  useEffect(() => {
+    // Persist the current campaign, then fold it into the history so a reload
+    // restores the latest result while older rounds stay reachable.
+    if (!generatedText || !contentHash) return;
+    try {
+      localStorage.setItem('promovault.generated', JSON.stringify({
+        text: generatedText,
+        contentHash,
+        category: lastCategory,
+        platform: lastPlatform,
+        platformLabel: lastPlatformLabel,
+        source: generationSource,
+        degradedReason,
+        characterCount: generatedText.length,
+        prompt: lastPrompt,
+        txHash
+      }));
+      setHistory(upsertInHistory({
+        text: generatedText,
+        contentHash,
+        category: lastCategory,
+        platform: lastPlatform,
+        platformLabel: lastPlatformLabel,
+        source: generationSource,
+        degradedReason,
+        characterCount: generatedText.length,
+        prompt: lastPrompt,
+        txHash
+      }));
+    } catch {
+      /* storage unavailable - generation still succeeded */
+    }
+  }, [generatedText, contentHash, lastCategory, lastPlatform, lastPlatformLabel, lastPrompt, generationSource, degradedReason, txHash]);
 
   const handleWalletConnect = (addr, sig, prov) => {
     setAddress(addr);
@@ -129,10 +176,6 @@ function App() {
     }
   };
 
-  const saveGeneratedCampaign = (campaign) => {
-    localStorage.setItem('promovault.generated', JSON.stringify(campaign));
-  };
-
   const handleGenerate = async ({ prompt, category, platform }) => {
     setIsGenerating(true);
     setGeneratedText(null);
@@ -141,7 +184,9 @@ function App() {
     try {
       const businessCategory = category.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000);
+      // Comfortably above the server's 12s provider timeout so the client
+      // observes the server's own fallback rather than aborting first.
+      const timeout = setTimeout(() => controller.abort(), 20000);
       try {
         const response = await fetch(`${CONFIG.API_URL}/api/generate`, {
           method: 'POST',
@@ -156,10 +201,23 @@ function App() {
         const data = await response.json();
         setGeneratedText(data.text);
         setContentHash(data.contentHash);
-        setLastCategory(businessCategory);
+        setLastCategory(data.businessCategory || businessCategory);
         setLastPlatform(data.platform || platform);
+        setLastPlatformLabel(data.platformLabel || null);
+        setLastPrompt(prompt);
         setGenerationSource(data.source || 'fallback');
-        saveGeneratedCampaign({ text: data.text, contentHash: data.contentHash, category: businessCategory, platform: data.platform || platform, source: data.source || 'fallback' });
+        setDegradedReason(data.degradedReason || null);
+        setHistory(addToHistory({
+          text: data.text,
+          contentHash: data.contentHash,
+          category: data.businessCategory || businessCategory,
+          platform: data.platform || platform,
+          platformLabel: data.platformLabel,
+          prompt,
+          source: data.source || 'fallback',
+          degradedReason: data.degradedReason || null,
+          characterCount: data.characterCount
+        }));
       } finally {
         clearTimeout(timeout);
       }
@@ -169,6 +227,21 @@ function App() {
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  // Load a past round back into the workspace so it can be re-read, re-anchored
+  // or verified without regenerating.
+  const handleRestore = (entry) => {
+    setGeneratedText(entry.text);
+    setContentHash(entry.contentHash);
+    setLastCategory(entry.category || 'general');
+    setLastPlatform(entry.platform || 'instagram');
+    setLastPlatformLabel(entry.platformLabel || null);
+    setLastPrompt(entry.prompt || '');
+    setGenerationSource(entry.source || 'fallback');
+    setDegradedReason(entry.degradedReason || null);
+    setTxHash(entry.txHash || null);
+    setActiveTab('Generate');
   };
 
   const handleAnchor = async () => {
@@ -187,7 +260,7 @@ function App() {
       const transaction = await contract.registerCampaign(contentHash, lastCategory, lastPlatform);
       await transaction.wait();
       setTxHash(transaction.hash);
-      saveGeneratedCampaign({ text: generatedText, contentHash, category: lastCategory, platform: lastPlatform, source: generationSource, txHash: transaction.hash });
+      setHistory(markAnchored(contentHash, transaction.hash));
     } catch (error) {
       console.error(error);
       window.alert('Failed to anchor on chain. Check your BOT balance or network.');
@@ -223,7 +296,7 @@ function App() {
 
           <div className="header-actions">
             <a
-              className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[color:var(--border,#d8d6cf)] px-3 text-[12px] font-bold transition hover:-translate-y-0.5"
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-line px-3 text-[12px] font-bold transition hover:-translate-y-0.5"
               href={CONFIG.contractExplorerUrl}
               target="_blank"
               rel="noopener noreferrer"
@@ -265,8 +338,15 @@ function App() {
                     isAnchoring={isAnchoring}
                     txHash={txHash}
                     source={generationSource}
+                    degradedReason={degradedReason}
                   />
                 )}
+                <History
+                  entries={history}
+                  activeHash={contentHash}
+                  onRestore={handleRestore}
+                  onRemoved={setHistory}
+                />
               </div>
             )}
             {activeTab === 'My Campaigns' && <MyCampaigns contract={contract} address={address} />}

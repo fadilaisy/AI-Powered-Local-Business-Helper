@@ -26,15 +26,26 @@ function VerifyCampaign() {
   const readContract = useMemo(() => getReadContract(), []);
 
   const handleVerify = async () => {
-    const value = hashInput.trim() || content;
-    if (!value.trim()) return;
+    const fingerprint = hashInput.trim();
+    const pasted = content.trim();
+    if (!fingerprint && !pasted) return;
     setIsVerifying(true);
     setResult(null);
     setError('');
     try {
-      const hash = /^0x[0-9a-fA-F]{64}$/.test(hashInput.trim()) ? hashInput.trim() : await sha256(value);
+      // Accept a fingerprint in either field. Previously a hash pasted into the
+      // "exact text" box was hashed again, so it never matched the record.
+      const candidate = fingerprint || pasted;
+      const isFingerprint = /^0x[0-9a-fA-F]{64}$/.test(candidate);
+      const hash = isFingerprint ? candidate : await sha256(candidate);
       const [exists, owner, timestamp] = await readContract.verifyCampaign(hash);
-      setResult({ hash, exists, owner, timestamp: exists ? new Date(Number(timestamp) * 1000).toLocaleString() : null });
+      setResult({
+        hash,
+        exists,
+        owner,
+        usedFingerprint: isFingerprint,
+        timestamp: exists ? new Date(Number(timestamp) * 1000).toLocaleString() : null
+      });
     } catch {
       setError('Verification failed. Check the active network and public RPC connection, then try again.');
     } finally {
@@ -44,12 +55,12 @@ function VerifyCampaign() {
 
   return (
     <section className="workspace-card overflow-hidden">
-      <div className="flex items-start justify-between gap-5 border-b-2 border-[#11110f] bg-[#ffdc35] px-5 py-5 sm:px-6">
+      <div className="flex items-start justify-between gap-5 border-b-2 border-line bg-accent px-5 py-5 sm:px-6">
         <div>
-          <h2 className="workspace-heading !text-[#11110f]">Check a public fingerprint</h2>
-          <p className="mt-2 max-w-lg text-[13px] leading-relaxed text-[#4e4b43]">Paste the exact copy or its 32-byte fingerprint. PromoVault reads {CONFIG.chainName} directly, so no wallet or account is required.</p>
+          <h2 className="workspace-heading !text-ink">Check a public fingerprint</h2>
+          <p className="mt-2 max-w-lg text-[13px] leading-relaxed text-muted">Paste the exact copy or its 32-byte fingerprint. PromoVault reads {CONFIG.chainName} directly, so no wallet or account is required.</p>
         </div>
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[12px] border-2 border-[#11110f] bg-white shadow-[3px_3px_0_#11110f]"><BotChainLogo className="h-7 w-7" /></span>
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[12px] border-2 border-line bg-surface shadow-pop"><BotChainLogo className="h-7 w-7" /></span>
       </div>
 
       <div className="space-y-6 p-5 sm:p-6">
@@ -61,34 +72,39 @@ function VerifyCampaign() {
           <div>
             <label className="control-label" htmlFor="verification-hash">Or paste a fingerprint</label>
             <input id="verification-hash" className="control-input font-mono text-[12px]" placeholder="0x…" value={hashInput} onChange={(event) => { setHashInput(event.target.value); setResult(null); }} />
-            <p className="mt-3 text-[12px] leading-relaxed text-[#6d6a62]">Use this when you already have the exact SHA-256 value. Any change to the text creates a different fingerprint.</p>
+            <p className="mt-3 text-[12px] leading-relaxed text-muted">Use this when you already have the exact SHA-256 value. Any change to the text creates a different fingerprint.</p>
           </div>
         </div>
 
-        {error && <p role="alert" className="rounded-[12px] border-2 border-[#c43d35] bg-[#fff0ee] px-4 py-3 text-[13px] leading-relaxed text-[#8e2e28]">{error}</p>}
+        {error && <p role="alert" className="rounded-[12px] border-2 border-danger bg-danger-soft px-4 py-3 text-[13px] leading-relaxed text-danger-ink">{error}</p>}
 
         <button type="button" onClick={handleVerify} disabled={(!content.trim() && !hashInput.trim()) || isVerifying} className="primary-submit">
-          {isVerifying ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#11110f] border-t-transparent" /> : <span className="h-5 w-5"><VerifyIcon /></span>}
+          {isVerifying ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-line border-t-transparent" /> : <span className="h-5 w-5"><VerifyIcon /></span>}
           {isVerifying ? 'Reading the public record…' : 'Check this fingerprint'}
         </button>
 
         {result && (
-          <div role="status" className={`rounded-[15px] border-2 border-[#11110f] p-5 ${result.exists ? 'bg-[#dff8eb]' : 'bg-[#fff0ee]'}`}>
+          <div role="status" className={`rounded-[15px] border-2 border-line p-5 ${result.exists ? 'bg-success-soft' : 'bg-danger-soft'}`}>
             <div className="flex items-start gap-3">
-              <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 border-[#11110f] text-white ${result.exists ? 'bg-[#169b63]' : 'bg-[#c43d35]'}`}><span className="h-5 w-5"><VerifyIcon found={result.exists} /></span></span>
+              <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 border-line text-on-brand ${result.exists ? 'bg-success' : 'bg-danger'}`}><span className="h-5 w-5"><VerifyIcon found={result.exists} /></span></span>
               <div>
                 <h3 className="text-[16px] font-extrabold">{result.exists ? 'Public record found.' : 'No matching public record.'}</h3>
-                <p className="mt-1 text-[12px] leading-relaxed text-[#5f5d57]">{result.exists ? 'This exact fingerprint was first submitted by the address below.' : 'No campaign with this exact fingerprint has been recorded on the configured network.'}</p>
+                <p className="mt-1 text-[12px] leading-relaxed text-muted">{result.exists ? 'This exact fingerprint was first submitted by the address below.' : 'No campaign with this exact fingerprint has been recorded on the configured network.'}</p>
               </div>
             </div>
-            <div className="mt-5 space-y-2 border-t border-[#b8b5ab] pt-4 text-[12px] text-[#5f5d57]">
+            <div className="mt-5 space-y-2 border-t border-line-soft pt-4 text-[12px] text-muted">
               <p className="select-all break-all font-mono">{result.hash}</p>
-              {result.exists && <><p>Submitted by <strong className="font-mono text-[#11110f]">{result.owner}</strong></p><p>First recorded <strong className="text-[#11110f]">{result.timestamp}</strong> on {CONFIG.chainName}</p></>}
+              <p className="text-[11px] text-faint">
+                {result.usedFingerprint
+                  ? 'Checked directly from the pasted fingerprint.'
+                  : 'Computed from the pasted text as SHA-256.'}
+              </p>
+              {result.exists && <><p>Submitted by <strong className="font-mono text-ink">{result.owner}</strong></p><p>First recorded <strong className="text-ink">{result.timestamp}</strong> on {CONFIG.chainName}</p></>}
             </div>
           </div>
         )}
 
-        <p className="border-t border-[#d5d2c9] pt-4 text-[11px] leading-relaxed text-[#6d6a62]">A public record proves that a hash was first submitted by an address at a recorded time. It does not prove authorship, business identity, or that AI generated the text.</p>
+        <p className="border-t border-line-soft pt-4 text-[11px] leading-relaxed text-muted">A public record proves that a hash was first submitted by an address at a recorded time. It does not prove authorship, business identity, or that AI generated the text.</p>
       </div>
     </section>
   );

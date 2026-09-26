@@ -1,36 +1,27 @@
 const crypto = require('crypto');
-const { buildPrompt } = require('./prompts');
+const {
+  buildPrompt,
+  fallbackCopy,
+  normalizeCategory,
+  normalizePlatform,
+  platformLabel
+} = require('./platforms');
 
 const MAX_PROMPT_LENGTH = 4000;
 const MAX_CATEGORY_LENGTH = 80;
 const MAX_PLATFORM_LENGTH = 40;
 const PROVIDER_TIMEOUT_MS = 12000;
+const PROVIDER_MAX_ATTEMPTS = 2;
+const PROVIDER_RETRY_BASE_MS = 600;
+// Must exceed the worst-case server time: attempt * (timeout + backoff).
+const CLIENT_TIMEOUT_MS = 45000;
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const RATE_LIMIT_MAX_REQUESTS = 20;
-
-const PLATFORM_ALIASES = {
-  instagram: 'instagram',
-  'twitter/x': 'twitter_x',
-  twitter_x: 'twitter_x',
-  twitter: 'twitter_x',
-  x: 'twitter_x',
-  flyer: 'flyer',
-  'print flyer': 'flyer',
-  'google business': 'google_business',
-  google_business: 'google_business'
-};
 
 const rateBuckets = new Map();
 
 function jsonError(message, status = 400, code = 'invalid_request') {
   return { error: { code, message }, status };
-}
-
-function normalizePlatform(value) {
-  if (value === undefined || value === null || value === '') return 'general';
-  if (typeof value !== 'string') return null;
-  const normalized = value.trim().toLowerCase();
-  return PLATFORM_ALIASES[normalized] || null;
 }
 
 function validateRequest(body) {
@@ -40,7 +31,9 @@ function validateRequest(body) {
 
   const prompt = body.prompt;
   const businessCategory = body.businessCategory ?? body.category ?? 'general';
-  const platform = body.platform ?? 'general';
+  // Omitting the platform is valid: it normalizes to the cross-category 'general'
+  // target instead of being rejected.
+  const platform = body.platform ?? '';
 
   if (typeof prompt !== 'string' || !prompt.trim()) {
     return jsonError('Prompt is required and must be a non-empty string');
@@ -57,13 +50,18 @@ function validateRequest(body) {
 
   const normalizedPlatform = normalizePlatform(platform);
   if (!normalizedPlatform) {
-    return jsonError('Platform must be one of Instagram, Twitter/X, Flyer, or Google Business');
+    return jsonError('Platform must be one of Instagram, X / Twitter, Print flyer, or Google Business');
+  }
+
+  const normalizedCategory = normalizeCategory(businessCategory);
+  if (!normalizedCategory) {
+    return jsonError('Business category is invalid');
   }
 
   return {
     value: {
       prompt: prompt.trim(),
-      businessCategory: businessCategory.trim() || 'general',
+      businessCategory: normalizedCategory,
       platform: normalizedPlatform
     }
   };
@@ -73,35 +71,19 @@ function hashContent(text) {
   return `0x${crypto.createHash('sha256').update(text, 'utf8').digest('hex')}`;
 }
 
-function fallbackCopy({ prompt, businessCategory, platform }) {
-  const categoryTag = businessCategory.replace(/[^a-zA-Z0-9]/g, '') || 'Promo';
-  const hashtags = `#LocalBusiness #WeekendSale #${categoryTag} #ShopLocal #Community`;
-  if (platform === 'twitter_x') {
-    return `⚡ Weekend Special Alert!\n\n${prompt}\n\nDon't miss out—visit us today or click below to claim.\n\n#ShopLocal #Sale`;
-  }
-  if (platform === 'flyer') {
-    return `SPECIAL COMMUNITY OFFER\n\n${prompt.toUpperCase()}\n\n• Available this weekend\n• Friendly local service\n• Visit us in-store today`;
-  }
-  if (platform === 'google_business') {
-    return `${prompt}\n\nWe welcome you to visit us this weekend. Contact us or stop by to learn more.`;
-  }
-  return `✨ Exclusive Weekend Special! ✨\n\n${prompt}\n\n📍 Stop by this weekend for great quality and warm local service. Tag a friend who shouldn't miss this!\n\n👉 Follow us for weekly perks and special discounts.\n\n${hashtags}`;
-}
-
 function providerSettings() {
-  const provider = process.env.LLM_PROVIDER || 'gemini';
+  const provider = (process.env.LLM_PROVIDER || 'gemini').trim().toLowerCase();
   if (!['gemini', 'openai'].includes(provider)) {
     throw new Error(`Unsupported LLM_PROVIDER: ${provider}`);
   }
 
-  let model = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
-  if (provider === 'gemini') {
-    if (model.includes('2.0') || model.includes('1.5') || model.includes('2.5')) {
-      model = 'gemini-3.6-flash';
-    }
-  } else if (provider === 'openai') {
-    model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-  }
+  // Read the override for the *active* provider only. The previous code
+  // coerced any Gemini model containing "2.0"/"1.5"/"2.5" to a hardcoded
+  // default, so an operator's explicit GEMINI_MODEL was silently discarded, and
+  // GEMINI_MODEL was consulted even when LLM_PROVIDER was openai.
+  const model = provider === 'openai'
+    ? (process.env.OPENAI_MODEL || 'gpt-4o-mini')
+    : (process.env.GEMINI_MODEL || 'gemini-3.6-flash');
 
   return {
     provider,
@@ -110,51 +92,122 @@ function providerSettings() {
   };
 }
 
+async function callProviderOnce(settings, systemPrompt, userPrompt) {
+  if (settings.provider === 'gemini') {
+    const { GoogleGenerativeAI } = require('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({
+      model: settings.model,
+      systemInstruction: systemPrompt
+    });
+    const result = await Promise.race([
+      model.generateContent(userPrompt),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Provider request timed out')), PROVIDER_TIMEOUT_MS))
+    ]);
+    const text = result.response.text();
+    if (!text?.trim()) throw new Error('Provider returned empty content');
+    return text;
+  }
+
+  const OpenAI = require('openai');
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const completion = await Promise.race([
+    openai.chat.completions.create({
+      model: settings.model,
+      temperature: 0.7,
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ]
+    }),
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Provider request timed out')), PROVIDER_TIMEOUT_MS))
+  ]);
+  const text = completion.choices?.[0]?.message?.content;
+  if (!text?.trim()) throw new Error('Provider returned empty content');
+  return text;
+}
+
+// Capacity throttling (503/429) is usually transient and the docs say to retry,
+// so one bounded attempt is made before dropping to the template. These are NOT
+// worth retrying:
+//   - quota exhaustion (the free tier is capped per day, so the suggested delay
+//     is minutes, far beyond any request budget we can hold open)
+//   - bad credentials, invalid model names, and our own timeout, which would
+//     only add latency to a guaranteed failure.
+function isRetryable(error) {
+  const message = String(error?.message || '');
+  if (/quota|exceeded your current quota|billing/i.test(message)) return false;
+  if (/API_KEY_INVALID|API key not valid|permission|401|403|400|404/i.test(message)) return false;
+  if (/timed out/i.test(message)) return false;
+  return /\b(429|500|502|503|504)\b/.test(message)
+    || /overloaded|high demand|rate limit|too many requests|try again later|ECONNRESET|ETIMEDOUT|EAI_AGAIN|fetch failed|ENOTFOUND/i.test(message);
+}
+
+// Distinguish "you are out of quota" from other provider failures so the client
+// and the operator can tell a billing/limit problem from a transient blip.
+function classifyProviderFailure(message) {
+  const text = String(message || '');
+  if (/quota|exceeded your current quota|billing/i.test(text)) return 'quota_exceeded';
+  if (/API_KEY_INVALID|API key not valid|permission denied|unauthenticated/i.test(text)) return 'invalid_credentials';
+  if (/timed out/i.test(text)) return 'timeout';
+  if (/\b(429)\b/.test(text)) return 'rate_limited';
+  if (/\b(500|502|503|504)\b/.test(text) || /overloaded|high demand|try again later/i.test(text)) return 'provider_unavailable';
+  if (/not found|404|is not supported|invalid model/i.test(text)) return 'invalid_model';
+  return 'provider_error';
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 async function callProvider(systemPrompt, userPrompt) {
   const settings = providerSettings();
   if (!settings.configured) {
     return { text: null, source: 'fallback', reason: 'provider_not_configured' };
   }
 
-  try {
-    if (settings.provider === 'gemini') {
-      const { GoogleGenerativeAI } = require('@google/generative-ai');
-      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-      const model = genAI.getGenerativeModel({
-        model: settings.model,
-        systemInstruction: systemPrompt
-      });
-      const result = await Promise.race([
-        model.generateContent(userPrompt),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Provider request timed out')), PROVIDER_TIMEOUT_MS))
-      ]);
-      const text = result.response.text();
-      if (!text?.trim()) throw new Error('Provider returned empty content');
+  let lastError;
+  for (let attempt = 0; attempt <= PROVIDER_MAX_ATTEMPTS; attempt++) {
+    try {
+      if (attempt > 0) await sleep(PROVIDER_RETRY_BASE_MS * attempt);
+      const text = await callProviderOnce(settings, systemPrompt, userPrompt);
       return { text, source: settings.provider, model: settings.model };
+    } catch (error) {
+      lastError = error;
+      const canRetry = attempt < PROVIDER_MAX_ATTEMPTS && isRetryable(error);
+      if (canRetry) {
+        console.warn(`LLM provider attempt ${attempt + 1} failed (${error.message}), retrying...`);
+        continue;
+      }
+      console.warn('LLM provider failed, using fallback:', error.message);
+      return {
+        text: null,
+        source: 'fallback',
+        reason: classifyProviderFailure(error.message),
+        error: error.message
+      };
     }
-
-    const OpenAI = require('openai');
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const completion = await Promise.race([
-      openai.chat.completions.create({
-        model: settings.model,
-        temperature: 0.7,
-        max_tokens: 400,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ]
-      }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Provider request timed out')), PROVIDER_TIMEOUT_MS))
-    ]);
-    const text = completion.choices?.[0]?.message?.content;
-    if (!text?.trim()) throw new Error('Provider returned empty content');
-    return { text, source: settings.provider, model: settings.model };
-  } catch (error) {
-    console.warn('LLM provider failed, using fallback:', error.message);
-    return { text: null, source: 'fallback', reason: 'provider_error', error: error.message };
   }
+
+  console.warn('LLM provider failed, using fallback:', lastError?.message);
+  return {
+    text: null,
+    source: 'fallback',
+    reason: classifyProviderFailure(lastError?.message),
+    error: lastError?.message
+  };
 }
+
+// Bucket keys are only ever overwritten when the same key returns, so entries
+// from clients that never came back accumulated forever. Sweep expired buckets
+// on a fixed interval to bound the map, and unref the timer so it never keeps
+// the process (or a test run) alive.
+const rateBucketSweeper = setInterval(() => {
+  const now = Date.now();
+  for (const [key, bucket] of rateBuckets) {
+    if (now - bucket.startedAt >= RATE_LIMIT_WINDOW_MS) rateBuckets.delete(key);
+  }
+}, RATE_LIMIT_WINDOW_MS);
+rateBucketSweeper.unref?.();
 
 function allowRequest(key, now = Date.now()) {
   const current = rateBuckets.get(key);
@@ -189,10 +242,13 @@ async function generate(body) {
     body: {
       text,
       contentHash: hashContent(text),
+      characterCount: text.length,
       businessCategory: request.businessCategory,
       platform: request.platform,
+      platformLabel: platformLabel(request.platform),
       source: provider.source,
       degraded: provider.source === 'fallback',
+      ...(provider.reason ? { degradedReason: provider.reason } : {}),
       ...(provider.error ? { providerError: provider.error } : {}),
       timestamp: new Date().toISOString()
     }
@@ -200,13 +256,16 @@ async function generate(body) {
 }
 
 module.exports = {
+  CLIENT_TIMEOUT_MS,
   MAX_PROMPT_LENGTH,
   RATE_LIMIT_MAX_REQUESTS,
   allowRequest,
+  classifyProviderFailure,
   fallbackCopy,
   generate,
   healthSnapshot,
   hashContent,
+  isRetryable,
   normalizePlatform,
   providerSettings,
   validateRequest

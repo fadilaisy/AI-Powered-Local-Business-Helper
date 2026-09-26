@@ -12,6 +12,25 @@ The blockchain record proves that a hash was first submitted by an address at a 
 4. Anchor the exact generated text hash to the configured BOT Chain contract.
 5. Verify exact text or paste a 32-byte hash later.
 
+Every generated round is also saved to a per-device history in the browser
+(`promovault.history`, newest first, capped at 50) so past copy and its
+fingerprint stay reachable without regenerating. History is local to the
+browser: clearing site data removes it, and it is never uploaded.
+
+## Platforms and category fallback
+
+`server/platforms.js` is the single source of truth for the target platform and
+business category vocabularies. It owns prompt rules, template fallback, and
+validation, so those three can no longer drift apart.
+
+- Omitting `platform` is valid and normalizes to a `general` target.
+- A `general` category is routed deterministically across the routable
+  categories (a brief always lands on the same one, so its hash is stable).
+- X/Twitter is deliberately excluded from the cross-category fallback: the
+  280-character ceiling is too tight to carry a category body, so it uses its
+  own single-line template instead.
+- Each platform has a hard character ceiling that fallback copy is clamped to.
+
 ## Architecture
 
 ```
@@ -41,7 +60,16 @@ npm install
 npm run dev
 ```
 
-The Vite development server proxies `/api` to `http://localhost:3001`; do not set `VITE_API_URL` for the normal local setup.
+The Vite development server proxies `/api` to `http://localhost:3001`; do not set `VITE_API_URL` for the normal local setup. `npm run dev` forces `NODE_ENV=development` before Vite starts, so a shell that already exports `NODE_ENV=production` cannot silently redirect the dev server at the deployed API instead of your local backend.
+
+## Theming
+
+Colors are defined once as CSS variables in `frontend/src/index.css` and exposed
+to Tailwind as semantic tokens (`surface`, `ink`, `muted`, `line`, `brand`,
+`accent`, `success`, `danger`, ...). Components use those tokens rather than
+hex literals, so light/dark switching is a single variable swap and no element
+can be left with a hardcoded, unreadable color. When adding a color, add a
+token for both themes and keep text/background pairs at WCAG AA contrast.
 
 ## Environment variables
 
@@ -49,9 +77,37 @@ Backend variables are documented in `server/.env.example`:
 
 - `LLM_PROVIDER`: `gemini` or `openai`
 - `GEMINI_API_KEY` / `OPENAI_API_KEY`: provider credentials
-- `GEMINI_MODEL` / `OPENAI_MODEL`: optional model overrides
+- `GEMINI_MODEL` / `OPENAI_MODEL`: optional model overrides (defaults: `gemini-3.6-flash`, `gpt-4o-mini`)
 - `ALLOWED_ORIGINS`: comma-separated production origins; omit locally
 - `PORT`: local server port, default `3001`
+
+`server/.env` is loaded relative to the `server/` directory, so it is picked up
+whether you run `npm start` from the repository root or `npm run dev` from
+inside `server/`. Real environment variables (Vercel, CI, Docker) take
+precedence over the file.
+
+## Provider limits and fallback
+
+`GET /api/health` reports `status: "ok"` only when a provider key is configured;
+otherwise it is `degraded` with HTTP 503. Check that endpoint before
+concluding the app is broken.
+
+A generation response carries `source`, `degraded`, and `degradedReason`:
+
+| `degradedReason` | Meaning |
+|---|---|
+| `provider_not_configured` | No API key set. |
+| `quota_exceeded` | The key's request quota is spent (the Gemini free tier is capped per day). |
+| `rate_limited` | Provider is throttling requests right now. |
+| `provider_unavailable` | Provider returned 5xx or reported overload. |
+| `invalid_credentials` / `invalid_model` | Key or model rejected. |
+| `timeout` | Provider did not respond within 12s. |
+
+Transient failures (5xx, overload, network) are retried once before falling
+back. Quota, credential, model, and timeout errors are not retried, because they
+cannot succeed within a request. Whenever the provider is unavailable the API
+still returns `200` with deterministic template copy, so the product keeps
+working; the UI states which reason applied.
 
 Frontend variables:
 
@@ -68,6 +124,24 @@ Frontend variables:
 
 The application supports both networks seamlessly with an in-app network switcher in the header. The default active network is **BOT Chain Mainnet**.
 
+## Deployment
+
+Vercel serves the built SPA and the `api/` serverless functions from the
+repository root, driven by the single root `vercel.json`. The former
+`frontend/vercel.json` and `server/vercel.json` were removed: both rewrote every
+route (`/(.*)`), so deploying from a subdirectory would have shadowed the root
+config and broken routing. Only the root `vercel.json` is authoritative.
+
+Required project environment variables:
+
+- `GEMINI_API_KEY` (or `OPENAI_API_KEY` with `LLM_PROVIDER=openai`)
+- `ALLOWED_ORIGINS`: comma-separated origins allowed to call the API
+- `VITE_MAINNET_CONTRACT_ADDRESS` / `VITE_TESTNET_CONTRACT_ADDRESS` when using
+  the built-in addresses
+
+Verify a deployment with `GET /api/health`: it returns `200` when a provider key
+is configured and `503` with `providerConfigured: false` when it is not.
+
 ## Validation
 
 ```bash
@@ -75,7 +149,11 @@ npm test
 npm run build
 ```
 
-The root build uses the frontend lockfile. Vercel serves the built SPA and the `api/` serverless functions from the repository root.
+The test suite is hermetic: it clears provider credentials before loading the
+module under test, so it never makes network calls and does not depend on the
+variables a developer machine or CI runner happens to export. CI additionally
+asserts that each `api/` entry point exports a callable handler, since a broken
+export would otherwise only fail at request time.
 
 ## Legal and data notices
 

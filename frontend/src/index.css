@@ -3,15 +3,43 @@
 @tailwind utilities;
 
 @layer base {
+  /*
+    Semantic color tokens. Components consume these through Tailwind utilities
+    (bg-surface, text-muted, border-line, ...), so a theme switch is a single
+    variable swap and no element can be left with a hardcoded, unreadable hex.
+  */
   :root {
     --canvas: #f7f7f3;
     --surface: #ffffff;
     --surface-soft: #f1f0eb;
     --ink: #11110f;
     --muted: #55534e;
-    --border: #11110f;
-    --border-muted: #c6c3ba;
+    --faint: #77746c;
+    --line: #11110f;
+    --line-soft: #c6c3ba;
     --on-ink: #ffffff;
+
+    --accent: #ffdc35;
+    --accent-ink: #11110f;
+    --on-accent: #11110f;
+    --accent-soft: #fff6c2;
+
+    --brand: #3157d5;
+    --brand-hover: #2447c4;
+    --brand-text: #3157d5;
+    --on-brand: #ffffff;
+
+    --success: #169b63;
+    --success-soft: #dff8eb;
+    --success-ink: #0f6a45;
+
+    --danger: #c43d35;
+    --danger-soft: #fff0ee;
+    --danger-ink: #8e2e28;
+
+    --warn-soft: #ffe2dc;
+    --warn-ink: #6b261e;
+
     --dot: rgba(17, 17, 15, 0.18);
     --shadow: rgba(17, 17, 15, 0.16);
     color-scheme: light;
@@ -24,9 +52,36 @@
     --surface-soft: #242421;
     --ink: #f7f7f3;
     --muted: #b8b5ad;
-    --border: #f7f7f3;
-    --border-muted: #4b4a45;
+    --faint: #928f87;
+    --line: #f7f7f3;
+    --line-soft: #4b4a45;
     --on-ink: #11110f;
+
+    /* The yellow action color is the brand signature and is kept in dark mode
+       too; only the ink drawn on top of it changes. Blue is not a legible
+       foreground for white icon strokes, so a dedicated on-accent token
+       carries that instead of overloading --brand. */
+    --accent: #ffdc35;
+    --accent-ink: #11110f;
+    --on-accent: #11110f;
+    --accent-soft: #332c07;
+
+    --brand: #3157d5;
+    --brand-hover: #2447c4;
+    --brand-text: #8fa9f5;
+    --on-brand: #ffffff;
+
+    --success: #2fbd7d;
+    --success-soft: #10331f;
+    --success-ink: #7fdcae;
+
+    --danger: #ff6b61;
+    --danger-soft: #351514;
+    --danger-ink: #ffb2aa;
+
+    --warn-soft: #351c19;
+    --warn-ink: #ffb2aa;
+
     --dot: rgba(247, 247, 243, 0.16);
     --shadow: rgba(0, 0, 0, 0.5);
     color-scheme: dark;
@@ -88,7 +143,7 @@
     @apply sticky top-0 z-50 border-b-2;
     color: var(--ink);
     background: var(--canvas);
-    border-color: var(--border);
+    border-color: var(--line);
   }
 
   .app-header-inner {
@@ -100,11 +155,14 @@
   }
 
   .theme-toggle {
-    @apply relative h-8 w-[58px] shrink-0 rounded-full border-2 border-[#11110f] bg-white p-0.5 transition-colors duration-300;
+    @apply relative h-8 w-[58px] shrink-0 rounded-full border-2 bg-surface p-0.5 transition-colors duration-300;
+    border-color: var(--line);
   }
 
   .theme-toggle-label {
-    @apply absolute top-1/2 z-10 grid h-5 w-5 -translate-y-1/2 place-items-center text-[#11110f] transition-opacity duration-200;
+    @apply absolute top-1/2 z-10 grid h-5 w-5 -translate-y-1/2 place-items-center;
+    color: var(--ink);
+    transition: opacity 200ms ease;
   }
 
   .theme-toggle-label svg {
@@ -120,15 +178,9 @@
   }
 
   .theme-toggle-knob {
-    @apply absolute left-0.5 top-0.5 h-6 w-6 rounded-full border-2 border-[#11110f] bg-[#ffdc35] shadow-[2px_2px_0_#11110f] transition-transform duration-300;
-  }
-
-  [data-theme="dark"] .theme-toggle {
-    @apply border-[#f7f7f3] bg-[#242421];
-  }
-
-  [data-theme="dark"] .theme-toggle-label {
-    @apply text-[#f7f7f3];
+    @apply absolute left-0.5 top-0.5 h-6 w-6 rounded-full border-2 bg-accent transition-transform duration-300;
+    border-color: var(--line);
+    box-shadow: 2px 2px 0 var(--line);
   }
 
   [data-theme="dark"] .theme-toggle-label-sun {
@@ -140,7 +192,7 @@
   }
 
   [data-theme="dark"] .theme-toggle-knob {
-    @apply translate-x-[26px] border-[#f7f7f3] bg-[#3157d5] shadow-[2px_2px_0_#f7f7f3];
+    @apply translate-x-[26px] bg-brand-hover;
   }
 
   .promo-brand {
@@ -149,7 +201,10 @@
   }
 
   .promo-brand-mark {
-    @apply grid h-11 w-11 place-items-center rounded-[12px] border-2 border-[#11110f] bg-[#ffdc35] shadow-[4px_4px_0_#11110f];
+    @apply grid h-11 w-11 place-items-center rounded-[12px] border-2 bg-accent;
+    border-color: var(--line);
+    color: var(--accent-ink);
+    box-shadow: 4px 4px 0 var(--line);
   }
 
   .promo-brand-mark svg {
@@ -164,7 +219,7 @@
     @apply mx-auto flex items-center gap-1 rounded-full border-2 p-1;
     color: var(--ink);
     background: var(--surface);
-    border-color: var(--border);
+    border-color: var(--line);
   }
 
   .primary-nav-item {
@@ -201,11 +256,12 @@
     @apply mb-7 inline-flex items-center gap-2 rounded-full border-2 px-4 py-2 text-[11px] font-black uppercase tracking-[0.12em];
     color: var(--ink);
     background: var(--surface);
-    border-color: var(--border);
+    border-color: var(--line);
   }
 
   .product-promise span {
-    @apply h-2.5 w-2.5 rounded-full border border-[#11110f] bg-[#ffdc35];
+    @apply h-2.5 w-2.5 rounded-full bg-accent;
+    border: 1px solid var(--line);
   }
 
   .hero-copy h1 {
@@ -219,7 +275,8 @@
 
   .hero-copy h1 span::after {
     content: '';
-    @apply absolute -bottom-1 left-0 -z-10 h-[0.22em] w-full -rotate-1 bg-[#ffdc35];
+    @apply absolute -bottom-1 left-0 -z-10 h-[0.22em] w-full -rotate-1;
+    background: var(--accent);
   }
 
   .hero-description {
@@ -232,15 +289,19 @@
   }
 
   .primary-action {
-    @apply inline-flex min-h-14 items-center justify-center gap-3 rounded-[14px] border-2 border-[#11110f] bg-[#3157d5] px-7 text-[15px] font-black text-white shadow-[5px_5px_0_#11110f] transition duration-200;
+    @apply inline-flex min-h-14 items-center justify-center gap-3 rounded-[14px] border-2 bg-brand px-7 text-[15px] font-black text-on-brand transition duration-200;
+    border-color: var(--line);
+    box-shadow: 5px 5px 0 var(--line);
   }
 
   .primary-action:hover {
-    @apply -translate-y-0.5 bg-[#2447c4] shadow-[7px_7px_0_#11110f];
+    @apply -translate-y-0.5 bg-brand-hover;
+    box-shadow: 7px 7px 0 var(--line);
   }
 
   .primary-action:active {
-    @apply translate-x-1 translate-y-1 shadow-[2px_2px_0_#11110f];
+    @apply translate-x-1 translate-y-1;
+    box-shadow: 2px 2px 0 var(--line);
   }
 
   .primary-action svg {
@@ -250,7 +311,7 @@
   .text-action {
     @apply border-b-2 pb-1 text-[14px] font-extrabold;
     color: var(--ink);
-    border-color: var(--border);
+    border-color: var(--line);
   }
 
   .workspace-wrap {
@@ -266,7 +327,7 @@
     @apply rounded-[18px] border-2;
     color: var(--ink);
     background: var(--surface);
-    border-color: var(--border);
+    border-color: var(--line);
   }
 
   .workspace-card {
@@ -293,48 +354,58 @@
     @apply w-full rounded-[14px] border-2 px-4 py-3 text-[14px] placeholder:text-[#858279] focus:outline-none;
     color: var(--ink);
     background: var(--surface);
-    border-color: var(--border);
+    border-color: var(--line);
   }
 
   .primary-submit {
-    @apply inline-flex min-h-14 w-full items-center justify-center gap-3 rounded-[14px] border-2 border-[#11110f] bg-[#ffdc35] px-6 text-[14px] font-black uppercase tracking-[0.02em] shadow-[5px_5px_0_#11110f] transition duration-200;
+    @apply inline-flex min-h-14 w-full items-center justify-center gap-3 rounded-[14px] border-2 bg-accent px-6 text-[14px] font-black uppercase tracking-[0.02em] text-accent-ink transition duration-200;
+    border-color: var(--line);
+    box-shadow: 5px 5px 0 var(--line);
   }
 
   .primary-submit:hover:not(:disabled) {
-    @apply -translate-y-0.5 bg-[#ffe658] shadow-[7px_7px_0_#11110f];
+    @apply -translate-y-0.5;
+    box-shadow: 7px 7px 0 var(--line);
   }
 
   .primary-submit:active:not(:disabled) {
-    @apply translate-x-1 translate-y-1 shadow-[2px_2px_0_#11110f];
+    @apply translate-x-1 translate-y-1;
+    box-shadow: 2px 2px 0 var(--line);
   }
 
   .primary-submit:disabled {
-    @apply cursor-not-allowed bg-[#d7d5ce] text-[#716f69] opacity-70;
+    @apply cursor-not-allowed opacity-60;
+    background: var(--surface-soft);
+    /* --faint is too light against --surface-soft to stay legible while
+       disabled, so use the muted token and rely on opacity for the state. */
+    color: var(--muted);
   }
 
   .secondary-button {
     @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full border-2 px-5 text-[13px] font-extrabold transition duration-200;
     color: var(--ink);
     background: var(--surface);
-    border-color: var(--border);
+    border-color: var(--line);
   }
 
   .secondary-button:hover {
     @apply -translate-y-0.5;
     color: var(--ink);
     background: var(--surface-soft);
-    box-shadow: 3px 3px 0 var(--border);
+    box-shadow: 3px 3px 0 var(--line);
   }
 
   .status-pill {
     @apply inline-flex items-center gap-2 rounded-full border-2 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.06em];
     color: var(--ink);
     background: var(--surface);
-    border-color: var(--border);
+    border-color: var(--line);
   }
 
   .proof-rail {
-    @apply mt-16 grid items-center gap-3 rounded-[18px] border-2 border-[#11110f] bg-white px-5 py-5 shadow-[6px_6px_0_rgba(17,17,15,0.12)] md:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr];
+    @apply mt-16 grid items-center gap-3 rounded-[18px] border-2 bg-surface px-5 py-5 md:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr];
+    border-color: var(--line);
+    box-shadow: 6px 6px 0 var(--shadow);
   }
 
   .flow-item {
@@ -342,7 +413,9 @@
   }
 
   .flow-icon {
-    @apply grid h-10 w-10 shrink-0 place-items-center rounded-[10px] border-2 border-[#11110f] bg-[#ffdc35];
+    @apply grid h-10 w-10 shrink-0 place-items-center rounded-[10px] border-2 bg-accent;
+    border-color: var(--line);
+    color: var(--accent-ink);
   }
 
   .flow-icon svg {
@@ -350,19 +423,23 @@
   }
 
   .flow-item span:not(.flow-icon) {
-    @apply block text-[10px] font-black uppercase tracking-[0.08em] text-[#6d6a62];
+    @apply block text-[10px] font-black uppercase tracking-[0.08em];
+    color: var(--faint);
   }
 
   .flow-item strong {
     @apply block truncate text-[13px] tracking-[-0.02em];
+    color: var(--ink);
   }
 
   .flow-line {
-    @apply hidden h-px w-5 bg-[#11110f] md:block;
+    @apply hidden h-5 w-5 md:block;
+    background: var(--line);
   }
 
   .app-footer {
-    @apply border-t-2 border-[#11110f] bg-white;
+    @apply border-t-2 bg-surface;
+    border-color: var(--line);
   }
 
   .app-footer-inner {
@@ -458,141 +535,37 @@
   animation-timing-function: cubic-bezier(.16, 1, .3, 1);
 }
 
-[data-theme="dark"] .theme-toggle {
-  background: var(--surface-soft) !important;
-  border-color: var(--border) !important;
+/*
+  The former dark-mode section re-declared ~40 Tailwind arbitrary-value classes
+  with !important. Any component using a hex value that was not on that list
+  kept its light-mode color, which is what produced unreadable black-on-dark
+  text. Colors are now token-driven, so only a few structural exceptions remain
+  below (shadows, and native form controls that ignore CSS variables).
+*/
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
-[data-theme="dark"] .theme-toggle-knob {
-  border-color: var(--border) !important;
-}
-
-[data-theme="dark"] .promo-brand-mark,
-[data-theme="dark"] .flow-icon,
-[data-theme="dark"] .footer-mark {
-  color: #11110f;
-}
-
-[data-theme="dark"] .bg-white {
-  background-color: var(--surface) !important;
-}
-
-[data-theme="dark"] .bg-\[\#f1f0eb\] {
-  background-color: var(--surface-soft) !important;
-}
-
-[data-theme="dark"] .bg-\[\#f7f7f3\] {
-  background-color: var(--canvas) !important;
-}
-
-[data-theme="dark"] .bg-\[\#fbfaf6\] {
-  background-color: var(--surface-soft) !important;
-}
-
-[data-theme="dark"] .text-\[\#11110f\] {
-  color: var(--ink) !important;
-}
-
-[data-theme="dark"] .text-\[\#5f5d57\],
-[data-theme="dark"] .text-\[\#55534e\],
-[data-theme="dark"] .text-\[\#6d6a62\] {
-  color: var(--muted) !important;
-}
-
-[data-theme="dark"] .border-\[\#11110f\] {
-  border-color: var(--border) !important;
-}
-
-[data-theme="dark"] .border-\[\#d5d2c9\],
-[data-theme="dark"] .border-\[\#c6c3ba\] {
-  border-color: var(--border-muted) !important;
-}
-
-[data-theme="dark"] .hero-copy h1 span::after {
-  background: #3157d5;
-}
-
-[data-theme="dark"] .primary-action,
-[data-theme="dark"] .primary-submit,
-[data-theme="dark"] .status-pill,
-[data-theme="dark"] .secondary-button {
-  border-color: var(--border);
-}
-
-[data-theme="dark"] .primary-action {
-  box-shadow: 5px 5px 0 #f7f7f3;
-}
-
-[data-theme="dark"] .primary-action:hover {
-  box-shadow: 7px 7px 0 #f7f7f3;
-}
-
-[data-theme="dark"] .primary-action:active,
-[data-theme="dark"] .primary-submit:active,
-[data-theme="dark"] .theme-toggle-knob {
-  box-shadow: 2px 2px 0 #f7f7f3;
-}
-
-[data-theme="dark"] .primary-submit {
-  box-shadow: 5px 5px 0 #f7f7f3;
-}
-
-[data-theme="dark"] .primary-submit:hover:not(:disabled) {
-  box-shadow: 7px 7px 0 #f7f7f3;
-}
-
-[data-theme="dark"] .proof-rail,
-[data-theme="dark"] .app-footer {
-  background: var(--surface);
-  border-color: var(--border);
-}
-
-[data-theme="dark"] .flow-line {
-  background: var(--border);
-}
-
-[data-theme="dark"] .proof-rail {
-  box-shadow: 6px 6px 0 var(--shadow);
-}
-
-[data-theme="dark"] .control-input::placeholder {
-  color: #8e8b83;
-}
-
-[data-theme="dark"] select option {
-  color: #f7f7f3;
-  background: #1b1b19;
-}
-
-[data-theme="dark"] .generate-workspace textarea,
-[data-theme="dark"] .generate-workspace .rounded-\[15px\],
-[data-theme="dark"] .verify-form textarea {
+select option {
   color: var(--ink);
   background: var(--surface);
 }
 
-[data-theme="dark"] .generate-workspace .rounded-\[15px\] {
-  border-color: var(--border);
+.placeholder-faint::placeholder {
+  color: var(--faint);
 }
 
-[data-theme="dark"] .generate-workspace .border-t-2 {
-  border-color: var(--border);
+/* Hard offset shadows use the theme-aware --shadow token so they soften
+   instead of reading as a solid black block on the dark canvas. */
+[data-theme="dark"] .workspace-card {
+  box-shadow: 6px 6px 0 var(--shadow);
 }
 
-[data-theme="dark"] .verify-form .border-t {
-  border-color: var(--border-muted);
-}
-
-[data-theme="dark"] .workspace-card .text-\[\#4e4b43\] {
-  color: #242421 !important;
-}
-
-[data-theme="dark"] .workspace-card .text-\[\#426353\] {
-  color: #a8e4c3 !important;
-}
-
-[data-theme="dark"] .workspace-card .text-\[\#8e2e28\] {
-  color: #ffb2aa !important;
+[data-theme="dark"] .proof-rail,
+[data-theme="dark"] .app-footer {
+  border-color: var(--line);
 }
 
 @media (max-width: 900px) {

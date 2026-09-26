@@ -43,12 +43,12 @@ function PromptForm({ onGenerate, isLoading }) {
 
   return (
     <section className="workspace-card overflow-hidden">
-      <div className="flex items-center justify-between gap-4 border-b-2 border-[#11110f] bg-[#3157d5] px-5 py-4 text-white sm:px-6">
+      <div className="flex items-center justify-between gap-4 border-b-2 border-line bg-brand px-5 py-4 text-on-brand sm:px-6">
         <div>
           <h2 className="text-[18px] font-extrabold tracking-[-0.035em]">Describe your promotion</h2>
-          <p className="mt-1 text-[12px] text-white">Plain words are enough. PromoVault handles the campaign formatting.</p>
+          <p className="mt-1 text-[12px] text-on-brand">Plain words are enough. PromoVault handles the campaign formatting.</p>
         </div>
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 border-[#11110f] bg-[#ffdc35] text-[#11110f] shadow-[3px_3px_0_#11110f]">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 border-line bg-accent text-ink shadow-pop">
           <BoltIcon />
         </span>
       </div>
@@ -65,10 +65,10 @@ function PromptForm({ onGenerate, isLoading }) {
                   type="button"
                   aria-pressed={active}
                   onClick={() => setPlatform(option.id)}
-                  className={`min-h-12 rounded-[12px] border-2 border-[#11110f] px-3 text-[12px] font-extrabold transition duration-200 ${
+                  className={`min-h-12 rounded-[12px] border-2 border-line px-3 text-[12px] font-extrabold transition duration-200 ${
                     active
-                      ? 'bg-[#3157d5] text-white shadow-[3px_3px_0_#11110f]'
-                      : 'bg-white text-[var(--muted)] hover:-translate-y-0.5 hover:bg-[#f1f0eb] hover:shadow-[3px_3px_0_#11110f]'
+                      ? 'bg-brand text-on-brand shadow-pop'
+                      : 'bg-surface text-[var(--muted)] hover:-translate-y-0.5 hover:bg-surface-soft hover:shadow-pop'
                   }`}
                 >
                   {option.label}
@@ -81,25 +81,25 @@ function PromptForm({ onGenerate, isLoading }) {
         <div>
           <div className="mb-2 flex items-center justify-between gap-3">
             <label className="control-label mb-0" htmlFor="campaign-prompt">What are you promoting?</label>
-            <span className="font-mono text-[11px] tabular-nums text-[#6d6a62]">{prompt.length}/4000</span>
+            <span className="font-mono text-[11px] tabular-nums text-muted">{prompt.length}/4000</span>
           </div>
-          <div className="rounded-[15px] border-2 border-[#11110f] bg-white focus-within:shadow-[4px_4px_0_#11110f]">
+          <div className="rounded-[15px] border-2 border-line bg-surface focus-within:shadow-pop">
             <textarea
               id="campaign-prompt"
               maxLength={4000}
-              className="min-h-36 w-full resize-none rounded-[14px] bg-transparent px-4 py-4 text-[15px] leading-relaxed text-[#11110f] placeholder:text-[#858279] focus:outline-none"
+              className="min-h-36 w-full resize-none rounded-[14px] bg-transparent px-4 py-4 text-[15px] leading-relaxed text-ink placeholder-faint focus:outline-none"
               placeholder="A weekend special, a new opening, a local event, a product launch..."
               value={prompt}
               onChange={(event) => setPrompt(event.target.value)}
             />
-            <div className="flex flex-wrap items-center gap-2 border-t-2 border-[#11110f] px-4 py-3">
-              <span className="mr-1 text-[10px] font-black uppercase tracking-[0.09em] text-[#6d6a62]">Try a brief</span>
+            <div className="flex flex-wrap items-center gap-2 border-t-2 border-line px-4 py-3">
+              <span className="mr-1 text-[10px] font-black uppercase tracking-[0.09em] text-muted">Try a brief</span>
               {SUGGESTIONS.map((suggestion) => (
                 <button
                   key={suggestion.label}
                   type="button"
                   onClick={() => setPrompt(suggestion.prompt)}
-                  className="rounded-full border border-[#11110f] bg-[#f1f0eb] px-3 py-1.5 text-[11px] font-bold transition hover:bg-[#ffdc35]"
+                  className="rounded-full border border-line bg-surface-soft px-3 py-1.5 text-[11px] font-bold transition hover:bg-accent"
                 >
                   {suggestion.label}
                 </button>
